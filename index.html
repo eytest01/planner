@@ -100,6 +100,10 @@
   .catList .chip{padding:4px 12px; font-size:12.5px;}
   .chip .x{margin-left:6px; color:#8A8578; cursor:pointer; font-weight:700;}
   .chip .x:hover{color:var(--hi);}
+  .chip .ed{margin-left:6px; color:#8A8578; cursor:pointer;}
+  .chip .ed:hover{color:var(--acc);}
+  .chkLb{display:flex; align-items:center; gap:6px; font-size:12.5px; color:#666; cursor:pointer;}
+  .chkLb input{cursor:pointer;}
 
   .searchBox{display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;}
   .searchBox input{border:1px solid #CFCFCF; border-radius:4px; padding:8px 12px; font-size:13px; width:300px; max-width:100%;}
@@ -273,7 +277,34 @@
   .thBtn .sw2{width:42px; height:42px; border-radius:10px; border:1px solid rgba(0,0,0,.12);}
   .thBtn.sel .sw2{outline:3px solid var(--acc); outline-offset:2px;}
   .thBtn.sel{font-weight:700; color:var(--ink);}
-  .modalFoot{display:flex; justify-content:flex-end; gap:8px; margin-top:6px;}
+  .modalFoot{display:flex; justify-content:flex-end; gap:8px; margin-top:6px; align-items:center;}
+
+  /* ── 업무 상세 모달 ─────────────────────── */
+  .tmMeta{display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin:-8px 0 18px; font-size:12.5px; color:#666;}
+  .tmSub{font-weight:400; color:var(--sub); font-size:11.5px;}
+  #tmTitle{margin-bottom:8px; line-height:1.35;}
+  .progBtns{display:flex; gap:4px; flex-wrap:wrap;}
+  .progBtns button{border:1px solid var(--line); background:#FFF; border-radius:4px; padding:7px 0;
+                   font-size:12px; cursor:pointer; flex:1; min-width:38px; color:#555;}
+  .progBtns button:hover{background:#F0F0F0;}
+  .progBtns button.sel{background:var(--head); color:var(--headTx); border-color:var(--head); font-weight:700;}
+  #tmRepType, .tmRepOpt select, .tmEnd input{border:1px solid #CFCFCF; border-radius:4px; padding:7px 9px;
+                                             font-size:13px; background:#FFF; font-family:inherit;}
+  #tmRepType{width:100%;}
+  .tmRepOpt{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+  .tmRepOpt:empty{display:none;}
+  .tmEnd{display:flex; align-items:center; gap:8px; margin-top:8px; font-size:12.5px; color:#666;}
+  .tmEnd.hide{display:none;}
+  #tmNote{width:100%; border:1px solid #CFCFCF; border-radius:4px; padding:9px 10px; font-size:13.5px;
+          font-family:inherit; resize:vertical; line-height:1.6; color:var(--ink);}
+  #tmNote:focus{outline:2px solid var(--selBd); outline-offset:-1px;}
+  .tmLinks{margin-top:8px; display:flex; flex-direction:column; gap:4px;}
+  .tmLinks:empty{display:none;}
+  .tmLinks a{font-size:12.5px; color:var(--blue); word-break:break-all;}
+  .repMark{font-size:9.5px; margin-right:2px;}
+  .repTag{font-size:10.5px; color:var(--sub); margin-top:2px;}
+  td.noteCell{white-space:pre-wrap; word-break:break-word; line-height:1.5;}
+  td.noteCell a{color:var(--blue);}
 
   /* ── 모바일 ─────────────────────────────── */
   @media (max-width: 900px){
@@ -334,7 +365,7 @@
       <div class="formBox">
         <div class="fRow">
           <label class="f">구분
-            <select id="fKind"><option>할일</option><option>일정</option><option>기타</option></select>
+            <select id="fKind"></select>
           </label>
           <label class="f">날짜
             <input type="date" id="fDate">
@@ -355,11 +386,24 @@
           <label class="f">진행률
             <select id="fProg"></select>
           </label>
-          <label class="f" style="min-width:150px;">비고
-            <input type="text" id="fNote" placeholder="메모">
+          <label class="f" style="flex:1; min-width:260px;">비고
+            <input type="text" id="fNote" placeholder="메모 · https://로 시작하는 링크를 넣으면 눌러서 열려요">
           </label>
           <button class="addBtn" id="fSubmit" onclick="submitTask()">＋ 추가</button>
           <button class="ghostBtn" id="fCancel" onclick="cancelEdit()">취소</button>
+        </div>
+
+        <div class="catPanel">
+          <div style="font-size:13px; color:#555; font-weight:700; margin-bottom:8px;">구분 관리
+            <span style="font-weight:400; color:#888;">— 이름 입력 → 추가 (최대 8개) · 칩의 ✎로 이름 수정</span>
+          </div>
+          <div class="fRow" style="align-items:center;">
+            <input type="text" id="kindName" placeholder="새 구분 이름" maxlength="8"
+                   style="border:1px solid #CFCFCF; border-radius:4px; padding:7px 9px; font-size:13px;">
+            <label class="chkLb"><input type="checkbox" id="kindNoProg"> 🕐 일정처럼 사용 (진행률 없음)</label>
+            <button class="addBtn sm" onclick="addKind()">구분 추가</button>
+          </div>
+          <div class="catList" id="kindList"></div>
         </div>
 
         <div class="catPanel">
@@ -391,7 +435,7 @@
               <th style="width:88px;" onclick="setSort('prio')">우선순위 <span class="arr" id="arr-prio">▾</span></th>
               <th style="text-align:left;">업무</th>
               <th style="width:76px;" onclick="setSort('prog')">진행률 <span class="arr" id="arr-prog">▾</span></th>
-              <th style="text-align:left; width:180px;">비고</th>
+              <th style="text-align:left; width:230px;">비고</th>
               <th style="width:76px;">관리</th>
             </tr>
           </thead>
@@ -415,7 +459,7 @@
               <span><span class="dot lo"></span>낮음</span>
               <span><span class="pie" style="--p:60"></span>진행률</span>
               <span><span class="check">✔</span>완료</span>
-              <span><span class="clock">🕐</span>일정</span>
+              <span><span class="clock">🕐</span>일정형</span>
             </div>
           </div>
           <div class="calScroll"><table class="cal" id="calTable"></table></div>
@@ -458,6 +502,50 @@
   </div>
 </div>
 
+<!-- ═══════════ 업무 상세 모달 ═══════════ -->
+<div class="modal" id="taskModal" onclick="if(event.target===this)closeTaskModal()">
+  <div class="modalCard" style="max-width:500px;">
+    <h2 id="tmTitle"></h2>
+    <div class="tmMeta" id="tmMeta"></div>
+
+    <div class="setRow" id="tmProgRow">
+      <h5>진행률 <span class="tmSub" id="tmProgDate"></span></h5>
+      <div class="progBtns" id="tmProg"></div>
+    </div>
+
+    <div class="setRow">
+      <h5>반복</h5>
+      <select id="tmRepType" onchange="tmRepChanged()">
+        <option value="none">반복 없음</option>
+        <option value="daily">매일</option>
+        <option value="weekly">매주 ○요일</option>
+        <option value="monthlyDay">매월 ○일</option>
+        <option value="monthlyNth">매월 ○째주 ○요일</option>
+        <option value="yearly">매년 이 날짜</option>
+      </select>
+      <div class="tmRepOpt" id="tmRepOpt"></div>
+      <label class="tmEnd" id="tmEndWrap">종료일 <input type="date" id="tmRepEnd" onchange="tmPreview()">
+        <button class="miniBtn" onclick="document.getElementById('tmRepEnd').value='';tmPreview()">지우기</button>
+      </label>
+      <div class="hint" id="tmRepPreview"></div>
+    </div>
+
+    <div class="setRow">
+      <h5>비고 <span class="tmSub">링크는 https:// 로 시작하면 눌러서 열려요</span></h5>
+      <textarea id="tmNote" rows="4" oninput="tmNoteLinks()" placeholder="메모나 링크를 자유롭게 적어주세요"></textarea>
+      <div class="tmLinks" id="tmLinks"></div>
+    </div>
+
+    <div class="modalFoot">
+      <button class="miniBtn danger" onclick="tmDelete()">삭제</button>
+      <button class="miniBtn" onclick="tmFullEdit()">전체 수정</button>
+      <span style="flex:1"></span>
+      <button class="miniBtn" onclick="closeTaskModal()">닫기</button>
+      <button class="addBtn sm" onclick="tmSave()">저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════ 설정 모달 ═══════════ -->
 <div class="modal" id="settingsModal" onclick="if(event.target===this)closeSettings()">
   <div class="modalCard">
@@ -466,6 +554,7 @@
       <h5>계정</h5>
       <div style="display:flex; align-items:center; gap:10px;">
         <span class="userChip">👤 <b id="setUserLb"></b></span>
+        <button class="miniBtn" onclick="renameAccount()">이름 변경</button>
         <button class="miniBtn" onclick="changeAccount()">계정 변경</button>
       </div>
     </div>
@@ -536,7 +625,7 @@ let sortKey = 'date', sortDir = 1;
 const now = new Date();
 let ym = {y: now.getFullYear(), m: now.getMonth()+1};   // 월간 보기
 let yearView = now.getFullYear();                        // 연간 보기
-let flt = {kind:new Set(['할일','일정','기타']), cat:new Set(), status:new Set(['pre','ing','done']), prio:new Set(['hi','mid','lo'])};
+let flt = {kind:new Set(), cat:new Set(), status:new Set(['pre','ing','done']), prio:new Set(['hi','mid','lo'])};
 
 /* ── 유틸 ─────────────────────────────────── */
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
@@ -546,6 +635,77 @@ function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.get
 function daysInMonth(y,m){ if(m===2) return (y%4===0&&y%100!==0)||y%400===0 ? 29 : 28; return [4,6,9,11].includes(m)?30:31; }
 function statusOf(t){ const p=Number(t.prog)||0; return p>=100?'done':p>0?'ing':'pre'; }
 function catById(id){ return (state.categories||[]).find(c=>c.id===id); }
+function kindByName(n){ return (state.kinds||[]).find(k=>k.name===n); }
+function isSchedule(t){ const k = kindByName(t.kind); return !!(k && k.noProg); }
+
+/* ── 반복 규칙 ─────────────────────────────── */
+const DOW_KO = ['일','월','화','수','목','금','토'];
+const NTH_KO = {1:'첫째', 2:'둘째', 3:'셋째', 4:'넷째', '-1':'마지막'};
+function pad2(n){ return String(n).padStart(2,'0'); }
+function mkDate(y,m,d){ return `${y}-${pad2(m)}-${pad2(d)}`; }
+function dowOf(y,m,d){ return new Date(y, m-1, d).getDay(); }
+function hasRep(t){ return !!(t.rep && t.rep.type && t.rep.type!=='none'); }
+
+function matchRep(rep, y, m, d, start){
+  const dow = dowOf(y,m,d), dim = daysInMonth(y,m);
+  switch(rep.type){
+    case 'daily':      return true;
+    case 'weekly':     return dow === Number(rep.dow);
+    case 'monthlyDay': return d === Math.min(Number(rep.day), dim);   // 31일 규칙이면 짧은 달은 말일
+    case 'monthlyNth':
+      if(dow !== Number(rep.dow)) return false;
+      if(Number(rep.nth) === -1) return d + 7 > dim;                  // 마지막 주
+      return Math.floor((d-1)/7) + 1 === Number(rep.nth);
+    case 'yearly': {
+      const sm = Number(start.slice(5,7)), sd = Number(start.slice(8,10));
+      return m === sm && d === Math.min(sd, dim);
+    }
+  }
+  return false;
+}
+function occDaysInMonth(t, y, m){
+  if(!hasRep(t)) return t.date.startsWith(`${y}-${pad2(m)}-`) ? [Number(t.date.slice(8,10))] : [];
+  const out = [], dim = daysInMonth(y,m), end = t.repEnd || '';
+  for(let d=1; d<=dim; d++){
+    const ds = mkDate(y,m,d);
+    if(ds < t.date) continue;
+    if(end && ds > end) continue;
+    if(matchRep(t.rep, y, m, d, t.date)) out.push(d);
+  }
+  return out;
+}
+function repLabel(t){
+  if(!hasRep(t)) return '';
+  const r = t.rep;
+  switch(r.type){
+    case 'daily':      return '매일';
+    case 'weekly':     return `매주 ${DOW_KO[Number(r.dow)]}요일`;
+    case 'monthlyDay': return `매월 ${r.day}일`;
+    case 'monthlyNth': return `매월 ${NTH_KO[String(r.nth)]}주 ${DOW_KO[Number(r.dow)]}요일`;
+    case 'yearly':     return `매년 ${Number(t.date.slice(5,7))}월 ${Number(t.date.slice(8,10))}일`;
+  }
+  return '';
+}
+/* 반복 업무는 날짜별로 진행률을 따로 기록 */
+function progOf(t, ds){
+  if(!hasRep(t)) return Number(t.prog)||0;
+  const rp = t.repProg || {};
+  if(rp[ds] !== undefined) return Number(rp[ds])||0;
+  return ds === t.date ? (Number(t.prog)||0) : 0;
+}
+function setProgAt(t, ds, v){
+  if(!hasRep(t)){ t.prog = v; return; }
+  t.repProg = t.repProg || {};
+  t.repProg[ds] = v;
+  if(ds === t.date) t.prog = v;
+}
+function statusFromProg(p){ return p>=100 ? 'done' : p>0 ? 'ing' : 'pre'; }
+
+/* ── 비고 속 링크 ─────────────────────────── */
+function linkify(s){
+  return esc(s||'').replace(/(https?:\/\/[^\s<]+)/g, u=>
+    `<a href="${u}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${u.length>42?u.slice(0,42)+'…':u}</a>`);
+}
 function weekdayKo(dateStr){ return ['일','월','화','수','목','금','토'][new Date(dateStr+'T00:00:00').getDay()]; }
 
 function normalize(data, name){
@@ -555,6 +715,19 @@ function normalize(data, name){
   d.tasks = Array.isArray(d.tasks) ? d.tasks : [];
   d.checklists = Array.isArray(d.checklists) ? d.checklists : [];
   d.checklists.forEach(c=>{ c.items = Array.isArray(c.items) ? c.items : []; c.items.forEach(it=>{ it.t=it.t||''; it.s=Number(it.s)||0; it.n=it.n||''; }); });
+  // 구분 — 없으면 기본값 생성 (예전 데이터 자동 이전)
+  if(!Array.isArray(d.kinds) || !d.kinds.length){
+    d.kinds = [{name:'할일', noProg:false},{name:'일정', noProg:true},{name:'기타', noProg:false}];
+  }
+  d.kinds.forEach(k=>{ k.name = String(k.name||''); k.noProg = !!k.noProg; });
+  // 목록에 없는 구분이 업무에 남아 있으면 살려둠
+  d.tasks.forEach(t=>{
+    if(!t.kind) t.kind = d.kinds[0].name;
+    if(!d.kinds.some(k=>k.name===t.kind)) d.kinds.push({name:t.kind, noProg:false});
+    if(!t.rep || !t.rep.type) t.rep = null;
+    t.repEnd = t.repEnd || '';
+    if(t.repProg && typeof t.repProg !== 'object') t.repProg = null;
+  });
   d.settings = d.settings || {};
   d.settings.theme = d.settings.theme || 'black';
   return d;
@@ -674,6 +847,61 @@ function changeAccount(){
   localStorage.removeItem('planner_user');
   state = null; closeSettings(); showLogin();
 }
+function renameAccount(){
+  const oldName = state.name, oldKey = userKey;
+  const input = prompt('새 이름을 입력하세요\n(업무·카테고리·체크리스트는 그대로 옮겨져요)', oldName);
+  if(input === null) return;
+  const newName = input.trim();
+  if(!newName){ alert('이름을 입력해주세요.'); return; }
+  if(newName === oldName) return;
+  const newKey = sanitizeKey(newName);
+  if(!newKey){ alert('사용할 수 없는 이름이에요.'); return; }
+
+  const doRename = exists=>{
+    if(exists && !confirm(`'${newName}' 계정이 이미 있어요.\n지금 데이터로 덮어쓰면 기존 '${newName}' 내용은 사라져요. 계속할까요?`)) return;
+    if(!confirm(`계정 이름을 '${oldName}' → '${newName}' 으로 바꿀까요?`)) return;
+
+    if(dbRef) dbRef.off();
+    state.name = newName;
+    userKey = newKey;
+    const json = JSON.stringify(state);
+    lastWritten = json;
+    localStorage.setItem('planner_data_'+newKey, json);
+    localStorage.setItem('planner_user', newName);
+    const list = localAccounts().filter(x=>x!==oldName);
+    if(!list.includes(newName)) list.push(newName);
+    localStorage.setItem('planner_accounts', JSON.stringify(list));
+
+    const cleanup = ()=>{
+      if(oldKey !== newKey) localStorage.removeItem('planner_data_'+oldKey);
+      document.getElementById('userNameLb').textContent = newName;
+      document.getElementById('setUserLb').textContent = newName;
+      document.getElementById('saveState').textContent = '✓ 저장됨';
+      alert(`계정 이름이 '${newName}' 으로 바뀌었어요.\n다른 기기에서도 새 이름으로 로그인하세요.`);
+    };
+    if(USE_FB){
+      db.ref('planner/accounts/'+newKey).set(JSON.parse(json))
+        .then(()=>{
+          if(oldKey !== newKey) return db.ref('planner/accounts/'+oldKey).remove();
+        })
+        .then(()=>{ attachRemote(); cleanup(); })
+        .catch(()=>{
+          alert('클라우드 저장에 실패했어요. 인터넷 연결을 확인한 뒤 다시 시도해주세요.\n기존 데이터는 그대로 남아 있어요.');
+          state.name = oldName; userKey = oldKey; attachRemote();
+        });
+    }else{
+      cleanup();
+    }
+  };
+
+  if(USE_FB && newKey !== oldKey){
+    db.ref('planner/accounts/'+newKey).once('value')
+      .then(s=>doRename(!!s.val()))
+      .catch(()=>doRename(false));
+  }else{
+    doRename(newKey !== oldKey && !!localStorage.getItem('planner_data_'+newKey));
+  }
+}
 
 /* ── 테마 / 설정 ──────────────────────────── */
 function applyTheme(key){
@@ -721,6 +949,62 @@ function activate(tab){
   if(id==='p-year') requestAnimationFrame(scrollToToday);
 }
 function activateById(paneId){ activate(document.querySelector(`.tab[data-pane="${paneId}"]`)); }
+
+/* ── 구분 ─────────────────────────────────── */
+function addKind(){
+  const el = document.getElementById('kindName');
+  const name = el.value.trim();
+  if(!name){ alert('구분 이름을 입력해주세요.'); return; }
+  if(state.kinds.length >= 8){ alert('구분은 최대 8개까지 만들 수 있어요.'); return; }
+  if(kindByName(name)){ alert('같은 이름의 구분이 이미 있어요.'); return; }
+  state.kinds.push({name, noProg: document.getElementById('kindNoProg').checked});
+  flt.kind.add(name);
+  el.value = '';
+  document.getElementById('kindNoProg').checked = false;
+  save(); renderKinds(); renderFilters(); renderTaskTable(); renderMonth();
+}
+function renameKind(oldName){
+  const k = kindByName(oldName); if(!k) return;
+  const input = prompt(`'${oldName}' 구분의 새 이름을 입력하세요\n(이 구분을 쓰는 업무도 함께 바뀌어요)`, oldName);
+  if(input === null) return;
+  const name = input.trim();
+  if(!name){ alert('이름을 입력해주세요.'); return; }
+  if(name === oldName) return;
+  if(kindByName(name)){ alert('같은 이름의 구분이 이미 있어요.'); return; }
+  k.name = name;
+  state.tasks.forEach(t=>{ if(t.kind === oldName) t.kind = name; });
+  if(flt.kind.delete(oldName)) flt.kind.add(name);
+  save(); renderKinds(); renderFilters(); renderTaskTable(); renderMonth();
+}
+function toggleKindProg(name){
+  const k = kindByName(name); if(!k) return;
+  k.noProg = !k.noProg;
+  save(); renderKinds(); renderTaskTable(); renderMonth();
+}
+function delKind(name){
+  if(state.kinds.length <= 1){ alert('구분은 최소 1개는 있어야 해요.'); return; }
+  const used = state.tasks.filter(t=>t.kind===name);
+  const fallback = state.kinds.find(k=>k.name!==name).name;
+  if(!confirm(`'${name}' 구분을 삭제할까요?` + (used.length?`\n(이 구분의 업무 ${used.length}건은 '${fallback}'으로 바뀌어요)`:''))) return;
+  used.forEach(t=>{ t.kind = fallback; });
+  state.kinds = state.kinds.filter(k=>k.name!==name);
+  flt.kind.delete(name); flt.kind.add(fallback);
+  save(); renderKinds(); renderFilters(); renderTaskTable(); renderMonth();
+}
+function renderKinds(){
+  // 폼 선택칸
+  const sel = document.getElementById('fKind');
+  const prev = sel.value;
+  sel.innerHTML = state.kinds.map(k=>
+    `<option value="${esc(k.name)}">${esc(k.name)}${k.noProg?' 🕐':''}</option>`).join('');
+  if([...sel.options].some(o=>o.value===prev)) sel.value = prev;
+  // 관리 목록
+  document.getElementById('kindList').innerHTML = state.kinds.map(k=>
+    `<span class="chip" style="background:#E9E9E9">${esc(k.name)}
+       <span class="ed" title="${k.noProg?'진행률 쓰도록 바꾸기':'일정처럼(진행률 없이) 바꾸기'}" onclick="toggleKindProg('${esc(k.name)}')">${k.noProg?'🕐':'％'}</span>
+       <span class="ed" title="이름 수정" onclick="renameKind('${esc(k.name)}')">✎</span>
+       <span class="x" title="삭제" onclick="delKind('${esc(k.name)}')">×</span></span>`).join('');
+}
 
 /* ── 카테고리 ─────────────────────────────── */
 function renderSwatches(){
@@ -802,6 +1086,7 @@ function submitTask(){
 function editTask(id){
   const t = state.tasks.find(x=>x.id===id); if(!t) return;
   editId = id;
+  renderKinds();
   document.getElementById('fKind').value = t.kind;
   document.getElementById('fDate').value = t.date;
   renderCats();
@@ -827,6 +1112,7 @@ function cancelEdit(){
 }
 function delTask(id){
   const t = state.tasks.find(x=>x.id===id); if(!t) return;
+  closeTaskModal();
   if(!confirm(`'${t.title}' 업무를 삭제할까요?`)) return;
   state.tasks = state.tasks.filter(x=>x.id!==id);
   if(editId===id) cancelEdit();
@@ -859,16 +1145,17 @@ function renderTaskTable(){
   const today = todayStr();
   document.getElementById('taskBody').innerHTML = rows.map(t=>{
     const c = catById(t.catId);
-    const done = statusOf(t)==='done';
-    const isSch = t.kind==='일정';
+    const rep = hasRep(t);
+    const done = !rep && statusOf(t)==='done';
+    const isSch = isSchedule(t);
     return `<tr class="${done?'done':''}">
       <td align="center">${esc(t.kind)}</td>
-      <td align="center" ${t.date===today?'style="color:var(--blue);font-weight:700;"':''}>${t.date} ${weekdayKo(t.date)}</td>
+      <td align="center" ${t.date===today?'style="color:var(--blue);font-weight:700;"':''}>${t.date} ${weekdayKo(t.date)}${rep?`<div class="repTag">🔁 ${esc(repLabel(t))}</div>`:''}</td>
       <td align="center">${c?`<span class="chip" style="background:${c.color}">${esc(c.name)}</span>`:'<span class="chip" style="background:#E6E6E6">미분류</span>'}</td>
       <td><span class="pcell"><span class="dot ${t.prio}"></span>${PRIO[t.prio]}</span></td>
       <td class="taskName">${esc(t.title)}</td>
-      <td><span class="pctCell">${isSch?'–':(Number(t.prog)||0)+'%'}</span></td>
-      <td>${esc(t.note||'')}</td>
+      <td><span class="pctCell">${isSch?'–':rep?'반복':(Number(t.prog)||0)+'%'}</span></td>
+      <td class="noteCell">${linkify(t.note||'')}</td>
       <td><span class="rowActs">
         <button class="miniBtn" onclick="editTask('${t.id}')">✎</button>
         <button class="miniBtn danger" onclick="delTask('${t.id}')">×</button>
@@ -877,6 +1164,128 @@ function renderTaskTable(){
   }).join('') || `<tr><td colspan="8"><div class="emptyMsg">${q?'검색 결과가 없어요.':'아직 등록된 업무가 없어요. 위에서 첫 업무를 추가해보세요!'}</div></td></tr>`;
   document.getElementById('qCnt').textContent = rows.length + '건 표시 중';
 }
+
+/* ── 업무 상세 모달 ───────────────────────── */
+let tmId = null, tmDate = null, tmProgVal = 0;
+
+function openTaskModal(id, ds){
+  const t = state.tasks.find(x=>x.id===id); if(!t) return;
+  tmId = id; tmDate = ds;
+  const c = catById(t.catId), sch = isSchedule(t);
+
+  document.getElementById('tmTitle').textContent = t.title;
+  document.getElementById('tmMeta').innerHTML =
+    `<span>${ds} ${weekdayKo(ds)}</span><span>·</span>
+     <span class="chip" style="background:#E9E9E9">${esc(t.kind)}</span>
+     ${c?`<span class="chip" style="background:${c.color}">${esc(c.name)}</span>`:''}
+     <span class="pcell"><span class="dot ${t.prio}"></span>${PRIO[t.prio]}</span>`;
+
+  // 진행률
+  const progRow = document.getElementById('tmProgRow');
+  if(sch){
+    progRow.style.display = 'none';
+  }else{
+    progRow.style.display = '';
+    tmProgVal = progOf(t, ds);
+    document.getElementById('tmProgDate').textContent = hasRep(t) ? `— ${ds} 이 날짜만` : '';
+    renderTmProg();
+  }
+
+  // 반복
+  const r = t.rep;
+  document.getElementById('tmRepType').value = r && r.type ? r.type : 'none';
+  tmRepChanged(t);
+  document.getElementById('tmRepEnd').value = t.repEnd || '';
+
+  // 비고
+  document.getElementById('tmNote').value = t.note || '';
+  tmNoteLinks();
+  document.getElementById('taskModal').classList.add('on');
+}
+function closeTaskModal(){
+  document.getElementById('taskModal').classList.remove('on');
+  tmId = null; tmDate = null;
+}
+function renderTmProg(){
+  document.getElementById('tmProg').innerHTML = Array.from({length:11},(_,i)=>{
+    const v = i*10;
+    return `<button class="${v===tmProgVal?'sel':''}" onclick="tmSetProg(${v})">${v}</button>`;
+  }).join('');
+}
+function tmSetProg(v){ tmProgVal = v; renderTmProg(); }
+
+function tmRepChanged(task){
+  const t = task || state.tasks.find(x=>x.id===tmId);
+  const type = document.getElementById('tmRepType').value;
+  const box = document.getElementById('tmRepOpt');
+  const r = (t && t.rep && t.rep.type===type) ? t.rep : null;
+  const baseDow = dowOf(Number(tmDate.slice(0,4)), Number(tmDate.slice(5,7)), Number(tmDate.slice(8,10)));
+  const baseDay = Number(tmDate.slice(8,10));
+  const baseNth = Math.floor((baseDay-1)/7) + 1;
+  const dowSel = sel=> DOW_KO.map((n,i)=>`<option value="${i}" ${i===sel?'selected':''}>${n}요일</option>`).join('');
+
+  if(type==='weekly'){
+    box.innerHTML = `<select id="tmDow" onchange="tmPreview()">${dowSel(r?Number(r.dow):baseDow)}</select>`;
+  }else if(type==='monthlyDay'){
+    box.innerHTML = `<select id="tmDay" onchange="tmPreview()">${
+      Array.from({length:31},(_,i)=>`<option value="${i+1}" ${i+1===(r?Number(r.day):baseDay)?'selected':''}>${i+1}일</option>`).join('')
+    }</select><span class="hint" style="margin:0; align-self:center;">31일로 두면 짧은 달은 말일에 표시돼요</span>`;
+  }else if(type==='monthlyNth'){
+    const nth = r ? String(r.nth) : String(baseNth);
+    box.innerHTML = `<select id="tmNth" onchange="tmPreview()">${
+      [['1','첫째주'],['2','둘째주'],['3','셋째주'],['4','넷째주'],['-1','마지막주']]
+        .map(([v,l])=>`<option value="${v}" ${v===nth?'selected':''}>${l}</option>`).join('')
+    }</select><select id="tmDow2" onchange="tmPreview()">${dowSel(r?Number(r.dow):baseDow)}</select>`;
+  }else{
+    box.innerHTML = '';
+  }
+  document.getElementById('tmEndWrap').classList.toggle('hide', type==='none');
+  tmPreview();
+}
+function tmReadRep(){
+  const type = document.getElementById('tmRepType').value;
+  if(type==='none') return null;
+  if(type==='daily')  return {type:'daily'};
+  if(type==='yearly') return {type:'yearly'};
+  if(type==='weekly') return {type:'weekly', dow:Number(document.getElementById('tmDow').value)};
+  if(type==='monthlyDay') return {type:'monthlyDay', day:Number(document.getElementById('tmDay').value)};
+  if(type==='monthlyNth') return {type:'monthlyNth', nth:Number(document.getElementById('tmNth').value),
+                                  dow:Number(document.getElementById('tmDow2').value)};
+  return null;
+}
+function tmPreview(){
+  const t = state.tasks.find(x=>x.id===tmId); if(!t) return;
+  const rep = tmReadRep();
+  const box = document.getElementById('tmRepPreview');
+  if(!rep){ box.textContent = '이 날짜에만 표시돼요.'; return; }
+  const fake = {date:t.date, rep, repEnd:document.getElementById('tmRepEnd').value};
+  const label = repLabel(fake);
+  // 이번 달 미리보기
+  const days = occDaysInMonth(fake, ym.y, ym.m);
+  const end = fake.repEnd ? ` · ${fake.repEnd}까지` : '';
+  box.textContent = `🔁 ${label}${end} — ${ym.m}월에는 ${days.length ? days.join(', ')+'일' : '표시 없음'}`;
+}
+function tmNoteLinks(){
+  const v = document.getElementById('tmNote').value || '';
+  const urls = v.match(/https?:\/\/[^\s]+/g) || [];
+  document.getElementById('tmLinks').innerHTML = urls.map(u=>
+    `<a href="${esc(u)}" target="_blank" rel="noopener">🔗 ${esc(u.length>50?u.slice(0,50)+'…':u)}</a>`).join('');
+}
+function tmSave(){
+  const t = state.tasks.find(x=>x.id===tmId); if(!t) return;
+  const hadRep = hasRep(t);
+  const rep = tmReadRep();
+  t.rep = rep;
+  t.repEnd = rep ? (document.getElementById('tmRepEnd').value || '') : '';
+  if(rep && !hadRep){ t.repProg = {}; t.repProg[t.date] = Number(t.prog)||0; }  // 반복 시작 시 기존 진행률 이전
+  if(!rep) t.repProg = null;
+  t.note = document.getElementById('tmNote').value.trim();
+  if(!isSchedule(t)) setProgAt(t, tmDate, tmProgVal);
+  save(); closeTaskModal();
+  renderTaskTable(); renderMonth(); renderYear();
+}
+function tmDelete(){ const id = tmId; closeTaskModal(); delTask(id); }
+function tmFullEdit(){ const id = tmId; closeTaskModal(); editTask(id); }
 
 /* ── 월간 필터 ───────────────────────────── */
 function toggleFlt(group, val){
@@ -887,18 +1296,31 @@ function toggleFlt(group, val){
 function renderFilters(){
   const mk = (group, items)=> items.map(([v,label])=>
     `<div class="pill ${flt[group].has(v)?'sel':''}" onclick="toggleFlt('${group}','${v}')">${label}</div>`).join('');
-  document.getElementById('fltKind').innerHTML = mk('kind', [['할일','할일'],['일정','일정'],['기타','기타']]);
+  document.getElementById('fltKind').innerHTML = state.kinds.map(k=>
+    `<div class="pill ${flt.kind.has(k.name)?'sel':''}" onclick="toggleFlt('kind','${esc(k.name)}')">${esc(k.name)}</div>`).join('');
   document.getElementById('fltStatus').innerHTML = mk('status', [['pre','시작전'],['ing','진행중'],['done','완료']]);
   document.getElementById('fltPrio').innerHTML = mk('prio', [['hi','높음'],['mid','중간'],['lo','낮음']]);
   renderCats(); // 카테고리 필터 포함
 }
-function passFilter(t){
+function passFilter(t, prog){
   if(!flt.kind.has(t.kind)) return false;
   const c = catById(t.catId);
   if(c && !flt.cat.has(c.id)) return false;   // 미분류(삭제된 카테고리)는 항상 표시
-  if(t.kind!=='일정' && !flt.status.has(statusOf(t))) return false;
+  if(!isSchedule(t) && !flt.status.has(statusFromProg(prog===undefined?(Number(t.prog)||0):prog))) return false;
   if(!flt.prio.has(t.prio)) return false;
   return true;
+}
+/* 해당 월에 표시할 '발생 건'들을 만든다 (반복 규칙 전개 + 필터 적용) */
+function occurrencesOfMonth(y, m){
+  const out = [];
+  state.tasks.forEach(t=>{
+    occDaysInMonth(t, y, m).forEach(day=>{
+      const ds = mkDate(y, m, day);
+      const prog = progOf(t, ds);
+      if(passFilter(t, prog)) out.push({t, day, ds, prog});
+    });
+  });
+  return out;
 }
 
 /* ── 월간 캘린더 ──────────────────────────── */
@@ -912,11 +1334,10 @@ function renderMonth(){
     `<div class="mBtn ${i+1===ym.m?'sel':''}" onclick="ym.m=${i+1};renderMonth()">${i+1}</div>`).join('');
 
   const mm = String(ym.m).padStart(2,'0');
-  const monthTasks = state.tasks.filter(t=>t.date.startsWith(`${ym.y}-${mm}-`));
-  const shown = monthTasks.filter(passFilter);
+  const occs = occurrencesOfMonth(ym.y, ym.m);
   const byDay = {};
-  shown.forEach(t=>{ const d=Number(t.date.slice(8,10)); (byDay[d]=byDay[d]||[]).push(t); });
-  Object.values(byDay).forEach(list=>list.sort((a,b)=>PRIO_ORD[a.prio]-PRIO_ORD[b.prio]));
+  occs.forEach(o=>{ (byDay[o.day]=byDay[o.day]||[]).push(o); });
+  Object.values(byDay).forEach(list=>list.sort((a,b)=>PRIO_ORD[a.t.prio]-PRIO_ORD[b.t.prio]));
 
   const dim = daysInMonth(ym.y, ym.m);
   const first = new Date(ym.y, ym.m-1, 1).getDay();
@@ -936,12 +1357,13 @@ function renderMonth(){
     }else{
       const dateStr = `${ym.y}-${mm}-${String(dayN).padStart(2,'0')}`;
       const cls = [isSun?'sunC':'', dateStr===td?'today':''].join(' ');
-      let items = (byDay[dayN]||[]).map(t=>{
-        const done = statusOf(t)==='done', sch = t.kind==='일정';
-        return `<div class="task ${done?'done':''}" onclick="editTask('${t.id}')" title="${esc(t.title)}${t.note?' — '+esc(t.note):''}">
+      let items = (byDay[dayN]||[]).map(o=>{
+        const t = o.t, sch = isSchedule(t), done = !sch && o.prog>=100;
+        const tip = esc(t.title) + (hasRep(t)?` (${repLabel(t)})`:'') + (t.note?' — '+esc(t.note.replace(/\n/g,' ')):'');
+        return `<div class="task ${done?'done':''}" onclick="openTaskModal('${t.id}','${o.ds}')" title="${tip}">
           ${sch?'<span class="clock">🕐</span>':''}<span class="dot ${t.prio}"></span>
-          <span class="t">${esc(t.title)}</span>
-          ${sch?'':done?'<span class="check">✔</span>':`<span class="pie" style="--p:${Number(t.prog)||0}"></span>`}
+          <span class="t">${hasRep(t)?'<span class="repMark">🔁</span>':''}${esc(t.title)}</span>
+          ${sch?'':done?'<span class="check">✔</span>':`<span class="pie" style="--p:${o.prog}"></span>`}
         </div>`;
       }).join('');
       h += `<td class="${cls}"><div class="dnum">${dayN}</div>${items}</td>`;
@@ -949,35 +1371,35 @@ function renderMonth(){
     if(i%7===6) h += '</tr>';
   }
   document.getElementById('calTable').innerHTML = h;
-  renderAnalysis(shown);
+  renderAnalysis(occs);
 }
 
 /* ── 분석 ────────────────────────────────── */
-function renderAnalysis(tasks){
-  document.getElementById('anaTitle').innerHTML = `📊 ${ym.m}월 분석 <small>왼쪽 필터가 적용된 업무 기준</small>`;
+function renderAnalysis(occs){
+  document.getElementById('anaTitle').innerHTML = `📊 ${ym.m}월 분석 <small>왼쪽 필터가 적용된 업무 기준 (반복 일정은 발생 횟수로 계산)</small>`;
   const box = document.getElementById('anaBox');
-  if(!tasks.length){ box.innerHTML = '<div class="emptyMsg">이 달에 표시할 업무가 없어요.</div>'; return; }
+  if(!occs.length){ box.innerHTML = '<div class="emptyMsg">이 달에 표시할 업무가 없어요.</div>'; return; }
 
-  const withProg = tasks.filter(t=>t.kind!=='일정');
-  const total = tasks.length;
-  const pre = withProg.filter(t=>statusOf(t)==='pre').length;
-  const ing = withProg.filter(t=>statusOf(t)==='ing').length;
-  const done = withProg.filter(t=>statusOf(t)==='done').length;
+  const withProg = occs.filter(o=>!isSchedule(o.t));
+  const total = occs.length;
+  const pre = withProg.filter(o=>o.prog===0).length;
+  const ing = withProg.filter(o=>o.prog>0 && o.prog<100).length;
+  const done = withProg.filter(o=>o.prog>=100).length;
   const sch = total - withProg.length;
   const rate = withProg.length ? Math.round(done/withProg.length*100) : 0;
   const pct = n=> withProg.length ? (n/withProg.length*100) : 0;
 
   // 우선순위별 완료/전체
   const prios = ['hi','mid','lo'].map(p=>{
-    const all = tasks.filter(t=>t.prio===p);
-    const dn = all.filter(t=>t.kind!=='일정' && statusOf(t)==='done').length;
+    const all = occs.filter(o=>o.t.prio===p);
+    const dn = all.filter(o=>!isSchedule(o.t) && o.prog>=100).length;
     return {p, all:all.length, dn};
   });
   const maxP = Math.max(1, ...prios.map(x=>x.all));
 
   // 카테고리별
   const catCnt = {};
-  tasks.forEach(t=>{ catCnt[t.catId] = (catCnt[t.catId]||0)+1; });
+  occs.forEach(o=>{ catCnt[o.t.catId] = (catCnt[o.t.catId]||0)+1; });
   const catRows = Object.entries(catCnt).map(([id,n])=>{
     const c = catById(id);
     return {name:c?c.name:'미분류', color:c?c.color:'#E6E6E6', n};
@@ -986,7 +1408,7 @@ function renderAnalysis(tasks){
 
   // 진행률 분포
   const bins = Array(11).fill(0);
-  withProg.forEach(t=>{ bins[Math.min(10, Math.round((Number(t.prog)||0)/10))]++; });
+  withProg.forEach(o=>{ bins[Math.min(10, Math.round(o.prog/10))]++; });
   const maxB = Math.max(1, ...bins);
 
   box.innerHTML = `
@@ -1003,7 +1425,7 @@ function renderAnalysis(tasks){
           <i style="width:${pct(ing)}%; background:#8FCB92;"></i>
           <i style="width:${pct(done)}%; background:#9FC3E8;"></i>
         </div>
-        ${sch?`<div class="hint" style="margin-top:8px;">🕐 일정 ${sch}건은 진행률 집계에서 제외</div>`:''}
+        ${sch?`<div class="hint" style="margin-top:8px;">🕐 일정형 ${sch}건은 진행률 집계에서 제외</div>`:''}
       </div>
       <div class="statCard">
         <div class="bigDonut" style="--p:${rate}"><b>${rate}%<small>완료율</small></b></div>
@@ -1051,9 +1473,9 @@ function renderYear(){
   const catDates = {};
   state.categories.forEach(c=>catDates[c.id]=new Set());
   state.tasks.forEach(t=>{
-    if(!t.date.startsWith(yearView+'-')) return;
     if(!catDates[t.catId]) return;
-    catDates[t.catId].add(Number(t.date.slice(5,7)) + '-' + Number(t.date.slice(8,10)));
+    for(let m=1; m<=12; m++)
+      occDaysInMonth(t, yearView, m).forEach(d=>catDates[t.catId].add(m+'-'+d));
   });
   const isThisYear = yearView === now.getFullYear();
   const tm = now.getMonth()+1, tdd = now.getDate();
@@ -1193,7 +1615,11 @@ function renderAll(){
   state.categories.forEach(c=>{
     if(!renderAll._known.has(c.id)){ flt.cat.add(c.id); renderAll._known.add(c.id); }
   });
-  renderSwatches(); renderFilters(); renderTaskTable(); renderMonth(); renderYear(); renderChecklists();
+  renderAll._knownKinds = renderAll._knownKinds || new Set();
+  state.kinds.forEach(k=>{
+    if(!renderAll._knownKinds.has(k.name)){ flt.kind.add(k.name); renderAll._knownKinds.add(k.name); }
+  });
+  renderKinds(); renderSwatches(); renderFilters(); renderTaskTable(); renderMonth(); renderYear(); renderChecklists();
 }
 
 /* ── 시작 ────────────────────────────────── */
