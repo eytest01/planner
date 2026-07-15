@@ -357,18 +357,40 @@
     .printTitle{ display:block; font-size:15pt; font-weight:900; text-align:center; margin-bottom:6mm; }
     .calScroll, .yScroll{ overflow:visible !important; border:none; }
 
-    /* 월간 */
+    /* 월간 — A4 가로 한 장 꽉 채우기 (빈 칸도 같은 높이) */
     body.pr-month #p-month{ display:block !important; }
-    body.pr-month .monthLayout{ display:block; }
-    body.pr-month .monthMain{ min-width:0; }
-    body.pr-month .calHead{ display:none; }
-    body.pr-month table.cal{ min-width:0; width:100%; }
-    body.pr-month .cal th{ padding:3pt 0; font-size:9pt; }
-    body.pr-month .cal td{ height:auto; min-height:26mm; }
-    body.pr-month .dnum{ font-size:10pt; }
-    body.pr-month .task{ font-size:7pt; margin-bottom:1.5pt; }
-    body.pr-month .spanBar{ height:11px; font-size:6.5pt; }
-    body.pr-month .spanGap{ height:11px; }
+    body.pr-month #prTitleMonth{ display:none !important; }
+    body.pr-month .monthLayout{ display:none !important; }
+    body.pr-month #monthPrintWrap{ display:flex !important; flex-direction:column; height:192mm; }
+    .mpTitle{ flex:none; font-size:15pt; font-weight:900; text-align:center; margin-bottom:4mm; }
+    .mpGrid{ flex:1; display:grid; grid-template-columns:repeat(7,1fr); min-height:0;
+             border-top:1px solid #3A3A3A; border-left:1px solid #3A3A3A; }
+    .mpHead{ background:#3A3A3A; color:#FFF; display:flex; align-items:center; justify-content:center;
+             font-size:8.5pt; font-weight:700; letter-spacing:1.5pt;
+             border-right:1px solid #3A3A3A; border-bottom:1px solid #3A3A3A; }
+    .mpHead.sun{ color:#FFB0A0; }
+    .mpCell{ border-right:1px solid #E3E3E3; border-bottom:1px solid #E3E3E3; padding:1.4mm 2mm 1mm;
+             overflow:hidden; display:flex; flex-direction:column; background:#FFF; min-height:0; }
+    .mpCell.out{ background:#F7F7F7; }
+    .mpCell.today{ background:#FFF6DC; }
+    .mpNum{ font-size:9pt; font-weight:900; margin-bottom:0.8mm; flex:none; }
+    .mpNum.sun{ color:#E14B4B; }
+    .mpCell.out .mpNum{ color:#C4C4C4; }
+    .mpBars{ display:flex; flex-direction:column; gap:0.5mm; margin:-1.4mm -2mm 1mm; flex:none; }
+    .mpBar{ height:2.6mm; font-size:6pt; display:flex; align-items:center; padding:0 1.5mm;
+            overflow:hidden; white-space:nowrap; color:#3F3A30; }
+    .mpBar.st{ border-radius:0.8mm 0 0 0.8mm; }
+    .mpBar.en{ border-radius:0 0.8mm 0.8mm 0; }
+    .mpGap{ height:2.6mm; flex:none; }
+    .mpTasks{ display:flex; flex-direction:column; gap:0.6mm; overflow:hidden; flex:1; min-height:0; }
+    .mpTask{ font-size:6.8pt; display:flex; align-items:center; gap:1mm; line-height:1.3; }
+    .mpTask .t{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+    .mpTime{ font-size:6pt; color:#7A7365; flex:none; }
+    .mpDot{ width:1.6mm; height:1.6mm; border-radius:50%; flex:none; }
+    .mpDot.hi{ background:#E14B4B; } .mpDot.mid{ background:#F0A24B; } .mpDot.lo{ background:#58A65C; }
+    .mpDone{ color:#58A65C; font-size:6.5pt; flex:none; }
+    .mpPct{ color:#999; font-size:6pt; flex:none; }
+    .mpMore{ font-size:6.3pt; color:#999; margin-top:0.4mm; }
 
     /* 연간 — 3개월씩 4페이지 */
     body.pr-year #p-year{ display:block !important; }
@@ -533,6 +555,7 @@
     <!-- ② 월간 캘린더 + 분석 -->
     <div class="pane" id="p-month">
       <div class="printTitle" id="prTitleMonth"></div>
+      <div id="monthPrintWrap" class="onlyPrint"></div>
       <div class="monthLayout">
         <div class="monthMain">
           <div class="calHead">
@@ -1584,7 +1607,52 @@ function renderMonth(){
     if(i%7===6) h += '</tr>';
   }
   document.getElementById('calTable').innerHTML = h;
+  buildMonthPrintGrid(ym.y, ym.m, mm, dim, first, prevDim, totalCells, byDay, spans, td);
   renderAnalysis(occs.concat(spans.list.map(sp=>({t:sp.t, ds:sp.t.date, prog:Number(sp.t.prog)||0}))));
+}
+/* 인쇄용 — A4 가로 한 장에 꽉 차는 그리드 (빈 칸도 같은 높이로 늘어남) */
+function buildMonthPrintGrid(y, m, mm, dim, first, prevDim, totalCells, byDay, spans, td){
+  const weeks = totalCells/7;
+  const DOW = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  let h = `<div class="mpTitle">${state.name} · ${y}년 ${m}월 업무진행표</div>
+    <div class="mpGrid" style="grid-template-rows:7mm repeat(${weeks},1fr)">`;
+  DOW.forEach((n,i)=> h += `<div class="mpHead ${i===0?'sun':''}">${n}</div>`);
+
+  for(let i=0; i<totalCells; i++){
+    const dayN = i - first + 1;
+    const isSun = i%7===0;
+    if(dayN < 1 || dayN > dim){
+      const n = dayN < 1 ? prevDim+dayN : dayN-dim;
+      h += `<div class="mpCell out"><div class="mpNum ${isSun?'sun':''}">${n}</div></div>`;
+      continue;
+    }
+    const dateStr = `${y}-${mm}-${String(dayN).padStart(2,'0')}`;
+    const isToday = dateStr===td;
+
+    let bars = '';
+    for(let ln=0; ln<spans.laneCount; ln++){
+      const sp = spans.list.find(x=>x.lane===ln && dayN>=x.from && dayN<=x.to);
+      if(!sp){ bars += '<div class="mpGap"></div>'; continue; }
+      const c = catById(sp.t.catId);
+      const isStart = dayN===sp.from, isEnd = dayN===sp.to;
+      const label = (isStart || isSun) ? esc(sp.t.title) : '';
+      bars += `<div class="mpBar ${isStart?'st':''} ${isEnd?'en':''}" style="background:${c?c.color:'#DDD'}">${label}</div>`;
+    }
+
+    const list = byDay[dayN]||[];
+    const cap = 9;
+    let tasks = list.slice(0,cap).map(o=>{
+      const t = o.t, sch = isSchedule(t), done = !sch && o.prog>=100;
+      const mark = t.time ? `<span class="mpTime">${t.time}</span>` : sch ? `<span class="mpTime">🕐</span>` : '';
+      const status = sch ? '' : done ? '<span class="mpDone">✔</span>' : `<span class="mpPct">${o.prog}%</span>`;
+      return `<div class="mpTask">${mark}<span class="mpDot ${t.prio}"></span><span class="t">${hasRep(t)?'🔁 ':''}${esc(t.title)}</span>${status}</div>`;
+    }).join('');
+    if(list.length>cap) tasks += `<div class="mpMore">+${list.length-cap}개 더</div>`;
+
+    h += `<div class="mpCell ${isToday?'today':''}"><div class="mpBars">${bars}</div><div class="mpNum ${isSun?'sun':''}">${dayN}</div><div class="mpTasks">${tasks}</div></div>`;
+  }
+  h += '</div>';
+  document.getElementById('monthPrintWrap').innerHTML = h;
 }
 
 /* ── 분석 ────────────────────────────────── */
