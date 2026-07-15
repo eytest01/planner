@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>업무진행표</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F4F4; --head:#3A3A3A; --acc:#1E1E1E; --headTx:#FFFFFF;
+    --selBg:#E3E3E3; --selBd:#9E9E9E;
+    --card:#FFFFFF; --ink:#2B2B2B; --sub:#8C8C8C;
+    --line:#E3E3E3; --line-soft:#EFEFEF;
+    --hi:#E14B4B; --mid:#F0A24B; --lo:#58A65C; --blue:#4C7DC0;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{background:var(--bg); color:var(--ink); font-family:'Noto Sans KR',sans-serif; padding:12px 16px 40px;}
+  button{font-family:inherit;}
+  input,select{font-family:inherit;}
+
+  /* ── 로그인 화면 ─────────────────────────── */
+  #loginScreen{position:fixed; inset:0; background:var(--bg); display:flex; align-items:center;
+               justify-content:center; z-index:100; padding:20px;}
+  .loginCard{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:40px 44px;
+             box-shadow:0 6px 24px rgba(0,0,0,.10); width:100%; max-width:440px; text-align:center;}
+  .loginCard h1{font-size:34px; font-weight:900; letter-spacing:6px; margin-bottom:6px;}
+  .loginCard .desc{font-size:13.5px; color:var(--sub); margin-bottom:22px; line-height:1.6;}
+  #accList{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:18px;}
+  #accList button{border:1px solid var(--line); background:#FAFAFA; border-radius:20px; padding:9px 20px;
+                  font-size:14px; font-weight:700; cursor:pointer;}
+  #accList button:hover{background:var(--selBg); border-color:var(--selBd);}
+  .loginRow{display:flex; gap:8px;}
+  .loginRow input{flex:1; border:1px solid #CFCFCF; border-radius:6px; padding:11px 14px; font-size:15px;}
+  .loginRow button{background:var(--head); color:var(--headTx); border:none; border-radius:6px;
+                   padding:11px 26px; font-size:15px; font-weight:700; cursor:pointer;}
+  #cloudNote{margin-top:16px; font-size:12px; color:var(--sub); line-height:1.6;}
+
+  /* ── 상단바 ─────────────────────────────── */
+  .topbar{display:flex; align-items:center; gap:14px; padding:6px 4px 12px;}
+  .topbar h1{font-size:24px; font-weight:900; letter-spacing:4px;}
+  .tbRight{margin-left:auto; display:flex; align-items:center; gap:10px;}
+  #saveState{font-size:11.5px; color:var(--sub);}
+  .userChip{background:var(--card); border:1px solid var(--line); border-radius:20px; padding:6px 14px;
+            font-size:13px;}
+  .userChip b{font-weight:900;}
+  .gearBtn{background:var(--head); color:var(--headTx); border:none; border-radius:6px; padding:8px 16px;
+           font-size:13px; font-weight:700; cursor:pointer;}
+
+  /* ── 탭 ─────────────────────────────────── */
+  .tabs{display:flex; gap:4px; border-bottom:2px solid var(--head); overflow-x:auto; white-space:nowrap;}
+  .tab{padding:10px 20px; font-size:14px; color:var(--sub); cursor:pointer; background:#ECECEC;
+       border:1px solid var(--line); border-bottom:none; border-radius:6px 6px 0 0;
+       display:inline-flex; align-items:center; gap:8px; flex:none;}
+  .tab.on{background:var(--head); color:var(--headTx); font-weight:700; border-color:var(--head);}
+  .tab.plus{padding:10px 15px; font-weight:900; font-size:16px; color:#666;}
+  .tab .tx{font-weight:900; opacity:.45; padding:0 2px;}
+  .tab .tx:hover{opacity:1; color:var(--hi);}
+  .sheet{background:var(--card); border:1px solid var(--line); border-top:none; padding:22px 24px 30px;
+         box-shadow:0 2px 8px rgba(0,0,0,.05);}
+  .pane{display:none;} .pane.on{display:block;}
+
+  /* ── 공통 부품 ───────────────────────────── */
+  .dot{width:10px; height:10px; border-radius:50%; display:inline-block; flex:none;}
+  .dot.hi{background:var(--hi);} .dot.mid{background:var(--mid);} .dot.lo{background:var(--lo);}
+  .chip{display:inline-block; padding:1px 10px; border-radius:3px; font-size:12px; color:#3F3A30;}
+  .pie{width:15px; height:15px; border-radius:50%; flex:none; border:1px solid #C9C9C9;
+       background:conic-gradient(var(--acc) calc(var(--p)*1%), #EDEDED 0);}
+  .check{color:var(--lo); font-size:13px; font-weight:700; flex:none;}
+  .secTitle{font-size:19px; font-weight:900; margin-bottom:14px;}
+  .secTitle small{font-size:13px; font-weight:400; color:var(--sub); margin-left:8px;}
+  .hint{font-size:12px; color:var(--sub); margin-top:8px;}
+  .miniBtn{border:1px solid #CFCFCF; background:#FFF; border-radius:4px; padding:4px 10px; font-size:12px;
+           cursor:pointer; color:#555;}
+  .miniBtn:hover{background:#F0F0F0;}
+  .miniBtn.danger:hover{color:var(--hi); border-color:var(--hi);}
+
+  /* ── ① 입력 ─────────────────────────────── */
+  .formBox{border:1px solid var(--line); border-radius:6px; padding:16px; background:#FAFAFA; margin-bottom:22px;}
+  .fRow{display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;}
+  .f{display:flex; flex-direction:column; gap:5px; font-size:12px; color:#666; font-weight:500;}
+  .f input,.f select{font-size:13px; color:var(--ink); border:1px solid #CFCFCF; border-radius:4px;
+                     padding:7px 9px; background:#FFF;}
+  .prioBtns{display:flex; gap:6px;}
+  .pBtn{border:1px solid #CFCFCF; background:#FFF; border-radius:4px; padding:7px 12px; font-size:13px;
+        display:flex; align-items:center; gap:6px; cursor:pointer;}
+  .pBtn.sel{border-color:var(--acc); background:var(--selBg); font-weight:700;}
+  .addBtn{background:var(--head); color:var(--headTx); border:none; border-radius:4px; padding:10px 26px;
+          font-size:14px; font-weight:700; cursor:pointer;}
+  .addBtn.sm{padding:8px 16px; font-size:13px;}
+  .ghostBtn{background:#FFF; color:#666; border:1px solid #CFCFCF; border-radius:4px; padding:10px 18px;
+            font-size:13px; cursor:pointer; display:none;}
+  .catPanel{margin-top:14px; border-top:1px solid var(--line); padding-top:13px;}
+  .swatches{display:flex; gap:8px; flex-wrap:wrap;}
+  .sw{width:30px; height:30px; border-radius:5px; border:1px solid rgba(0,0,0,.1); cursor:pointer; position:relative;}
+  .sw.sel{outline:2px solid var(--acc); outline-offset:1px;}
+  .sw.sel::after{content:'✓'; position:absolute; inset:0; display:flex; align-items:center;
+                 justify-content:center; font-weight:700; color:#3F3A30;}
+  .catList{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
+  .catList .chip{padding:4px 12px; font-size:12.5px;}
+  .chip .x{margin-left:6px; color:#8A8578; cursor:pointer; font-weight:700;}
+  .chip .x:hover{color:var(--hi);}
+
+  .searchBox{display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;}
+  .searchBox input{border:1px solid #CFCFCF; border-radius:4px; padding:8px 12px; font-size:13px; width:300px; max-width:100%;}
+  .searchBox .cnt{font-size:12px; color:var(--sub);}
+
+  .tScroll{overflow-x:auto;}
+  table.list{width:100%; border-collapse:collapse; font-size:13px; min-width:920px;}
+  .list th{background:#EDEDED; border:1px solid var(--line); padding:7px 10px; font-weight:700; color:#444;
+           font-size:12.5px; cursor:pointer; user-select:none;}
+  .list th .arr{color:#999; font-size:10px;}
+  .list td{border:1px solid var(--line-soft); padding:6px 10px; background:#FFF; vertical-align:middle;}
+  .list tr:nth-child(even) td{background:#FCFCFC;}
+  .list tr.done td{color:#B5B5B5; background:#F5F5F5;}
+  .list tr.done .taskName{text-decoration:line-through;}
+  .pcell{display:flex; align-items:center; gap:6px; justify-content:center;}
+  .pctCell{background:var(--selBg); font-weight:700; text-align:center; font-size:12.5px; border-radius:2px;
+           padding:2px 0; display:block;}
+  tr.done .pctCell{background:#E6E6E6; font-weight:400;}
+  .rowActs{display:flex; gap:5px; justify-content:center;}
+
+  /* ── ② 월간 캘린더 ─────────────────────────── */
+  .monthLayout{display:flex; gap:20px; align-items:flex-start;}
+  .monthMain{flex:1; min-width:0;}
+  .calHead{display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap;}
+  .calHead .ym{font-size:30px; font-weight:900; letter-spacing:-1px;}
+  .nav{border:1px solid #CFCFCF; background:#FFF; border-radius:4px; width:30px; height:30px; cursor:pointer;
+       font-size:13px; color:#666;}
+  .legend{margin-left:auto; display:flex; gap:12px; font-size:12px; color:#666; align-items:center; flex-wrap:wrap;}
+  .legend span{display:flex; align-items:center; gap:5px;}
+  .calScroll{overflow-x:auto;}
+  table.cal{width:100%; border-collapse:collapse; table-layout:fixed; min-width:840px;}
+  .cal th{background:var(--head); color:var(--headTx); padding:8px 0; font-size:13px; font-weight:700;
+          letter-spacing:2px; border:1px solid var(--head);}
+  .cal th.sun{color:#FFB0A0;}
+  .cal td{border:1px solid var(--line); vertical-align:top; height:112px; padding:4px 5px 6px; background:#FFF;}
+  .cal td.out{background:#F7F7F7;}
+  .cal td.out .dnum{color:#C4C4C4;}
+  .cal td.today{background:var(--selBg);}
+  .dnum{font-size:15px; font-weight:900; text-align:center; margin-bottom:3px;}
+  td.sunC .dnum{color:var(--hi);}
+  td.today .dnum{color:var(--acc);}
+  .task{display:flex; align-items:center; gap:5px; font-size:11.5px; line-height:1.4; margin-bottom:3px;
+        cursor:pointer; border-radius:3px; padding:0 2px;}
+  .task:hover{background:#F1F1F1;}
+  .task .t{flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;}
+  .task.done .t{text-decoration:line-through; color:#BBB;}
+  .task .clock{font-size:11px; flex:none;}
+
+  .side{width:240px; flex:none; display:flex; flex-direction:column; gap:14px;}
+  .panel{border:1px solid var(--line); border-radius:6px; padding:13px 15px; background:#FDFDFD;}
+  .panel h4{font-size:13px; font-weight:700; margin-bottom:9px; color:#444;}
+  .yearBox{background:var(--head); color:var(--headTx); font-size:24px; font-weight:900; text-align:center;
+           border-radius:4px; padding:6px 0; letter-spacing:2px; margin-bottom:10px;
+           display:flex; align-items:center; justify-content:center; gap:14px;}
+  .yearBox button{background:none; border:none; color:var(--headTx); font-size:15px; cursor:pointer; opacity:.7;}
+  .yearBox button:hover{opacity:1;}
+  .mGrid{display:grid; grid-template-columns:repeat(4,1fr); gap:6px;}
+  .mBtn{border:1px solid var(--line); border-radius:4px; text-align:center; padding:6px 0; font-size:13px;
+        background:#FFF; cursor:pointer;}
+  .mBtn.sel{background:var(--selBg); border-color:var(--selBd); font-weight:700;}
+  .pill{display:block; border:1px solid var(--line); border-radius:4px; padding:6px 10px; font-size:13px;
+        margin-bottom:6px; background:#FFF; cursor:pointer; opacity:.45;}
+  .pill.sel{opacity:1; outline:2px solid var(--selBd);}
+  .pillRow{display:flex; gap:6px; flex-wrap:wrap;}
+  .pillRow .pill{flex:1; text-align:center; margin-bottom:0; min-width:56px;}
+
+  .analysis{margin-top:30px; border-top:2px solid var(--head); padding-top:20px;}
+  .statRow{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:20px;}
+  .statCard{background:#FFF; border:1px solid var(--line); border-radius:12px; padding:15px 20px;
+            display:flex; gap:22px; align-items:center; box-shadow:0 2px 6px rgba(0,0,0,.05);}
+  .cWrap{display:flex; flex-direction:column; align-items:center; gap:5px;}
+  .cWrap .lb{font-size:12.5px; font-weight:700;}
+  .cWrap .lb.pre{color:#999;} .cWrap .lb.ing{color:var(--lo);} .cWrap .lb.fin{color:#333;}
+  .circ{width:58px; height:58px; border-radius:50%; background:var(--head); color:var(--headTx); display:flex;
+        align-items:center; justify-content:center; font-size:20px; font-weight:900;}
+  .stackBar{height:8px; border-radius:4px; overflow:hidden; display:flex; margin-top:11px; background:#E6E6E6;}
+  .stackBar i{display:block; height:100%;}
+  .bigDonut{width:100px; height:100px; border-radius:50%; position:relative;
+        background:conic-gradient(#79A87C calc(var(--p)*1%), #E6E6E6 0);}
+  .bigDonut::before{content:''; position:absolute; inset:13px; background:#FFF; border-radius:50%;}
+  .bigDonut b{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+              justify-content:center; font-size:21px; font-weight:900;}
+  .bigDonut b small{font-size:11px; color:var(--sub); font-weight:400;}
+  .vbars{display:flex; align-items:flex-end; gap:16px; height:110px; width:220px; padding:0 4px;}
+  .vb{flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; height:100%; justify-content:flex-end;}
+  .vb .num{font-size:11px; color:#666;}
+  .vb .col{width:100%; max-width:42px; border-radius:2px; display:flex; align-items:flex-end;}
+  .vb.hiB .col{background:repeating-linear-gradient(45deg,#FBDDDD 0 4px,#FFF 4px 8px); border:1px solid var(--hi);}
+  .vb.midB .col{background:repeating-linear-gradient(45deg,#FCEBD4 0 4px,#FFF 4px 8px); border:1px solid var(--mid);}
+  .vb.loB .col{background:repeating-linear-gradient(45deg,#DDEEDD 0 4px,#FFF 4px 8px); border:1px solid var(--lo);}
+  .vb.hiB .col i{background:var(--hi);} .vb.midB .col i{background:var(--mid);} .vb.loB .col i{background:var(--lo);}
+  .vb .col i{display:block; width:100%; opacity:.85;}
+  .vb .lb{font-size:12px; font-weight:700;}
+  .charts{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px;}
+  .chartBox{background:#FFF; border:1px solid var(--line); border-radius:12px; padding:15px 18px;
+            box-shadow:0 2px 6px rgba(0,0,0,.05);}
+  .chartBox h3{font-size:14px; font-weight:700; margin-bottom:13px; color:#444;}
+  .hbars .row{display:flex; align-items:center; gap:10px; margin-bottom:9px; font-size:13px;}
+  .hbars .row .lb{width:80px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;}
+  .hbars .row .tr{flex:1; height:16px; background:#F0F0F0; border-radius:3px; overflow:hidden;}
+  .hbars .row .tr i{display:block; height:100%; border-radius:3px; border-right:1px solid rgba(0,0,0,.08);}
+  .hbars .row .n{width:28px; text-align:right; font-size:12px; color:#666;}
+  .hist{display:flex; align-items:flex-end; gap:5px; height:110px;}
+  .hist .hb{flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center;
+            gap:4px; height:100%;}
+  .hist .hb i{width:100%; background:#9FC3E8; border-radius:2px 2px 0 0; display:block;}
+  .hist .hb.last i{background:#79A87C;}
+  .hist .hb span{font-size:9.5px; color:#888;}
+  .emptyMsg{padding:30px 0; text-align:center; color:var(--sub); font-size:13.5px;}
+
+  /* ── ③ 연간 캘린더 ─────────────────────────── */
+  .yHead{display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap;}
+  .yHead .ym{font-size:30px; font-weight:900; letter-spacing:-1px;}
+  .yScroll{overflow-x:auto; border:1px solid var(--line); border-radius:4px;}
+  table.year{border-collapse:separate; border-spacing:0; font-size:10px;}
+  .year th, .year td{border-right:1px solid var(--line-soft); border-bottom:1px solid var(--line-soft);}
+  .year th.catCol{position:sticky; left:0; z-index:3; background:var(--head); color:var(--headTx);
+                  min-width:110px; font-size:13px; padding:6px 10px; border-right:1px solid var(--head);}
+  .year th.mHead{background:var(--head); color:var(--headTx); font-size:12px; font-weight:700; padding:5px 0;
+                 border-right:1px solid rgba(255,255,255,.25);}
+  .year th.mHead.alt{filter:brightness(1.25);}
+  .year th.dHead{background:#EDEDED; color:#666; font-weight:500; min-width:16px; max-width:16px;
+                 padding:3px 0; text-align:center;}
+  .year th.dHead.alt{background:#E4E4E4;}
+  .year td.catName{position:sticky; left:0; z-index:2; background:#FFF; font-size:12.5px; font-weight:700;
+                   padding:6px 10px; white-space:nowrap; border-right:1px solid var(--line);}
+  .year td.catName .dot{margin-right:6px;}
+  .year td.dcell{min-width:16px; max-width:16px; height:32px; background:#FFF; padding:0; cursor:pointer;}
+  .year td.dcell.alt{background:#FAFAFA;}
+  .year .todayCol{border-left:2px solid var(--hi) !important;}
+
+  /* ── ④ 체크리스트 ─────────────────────────── */
+  .clHead{display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap;}
+  .clHead .name{font-size:19px; font-weight:900;}
+  .clScroll{overflow-x:auto;}
+  table.clTable{width:100%; border-collapse:collapse; font-size:14px; min-width:560px;}
+  .clTable th{background:var(--head); color:var(--headTx); padding:9px 10px; font-weight:700;
+              border:1px solid var(--head); font-size:13.5px;}
+  .clTable th.thChk{width:72px;}
+  .clTable th.thDel{width:36px;}
+  .clTable td{border:1px solid var(--line); background:#FFF; padding:0; vertical-align:middle;}
+  .clTable tr:nth-child(even) td{background:#FCFCFC;}
+  .clIn{width:100%; border:none; background:transparent; font-size:14px; padding:10px 12px;
+        color:var(--ink); outline:none;}
+  .clIn:focus{background:var(--selBg);}
+  td.chk{text-align:center; cursor:pointer; font-size:19px; font-weight:900; height:42px; user-select:none;}
+  td.chk[data-s="0"]::after{content:'—'; color:#D5D5D5; font-size:14px;}
+  td.chk[data-s="1"]{color:var(--lo);} td.chk[data-s="1"]::after{content:'✔';}
+  td.chk[data-s="2"]{color:var(--mid);} td.chk[data-s="2"]::after{content:'△';}
+  td.chk[data-s="3"]{color:var(--hi);} td.chk[data-s="3"]::after{content:'✕';}
+  td.rowDel{text-align:center; color:#C9C9C9; cursor:pointer; font-weight:900;}
+  td.rowDel:hover{color:var(--hi);}
+  .clFoot{display:flex; align-items:center; gap:14px; margin-top:12px; flex-wrap:wrap;}
+  .rowBtn{border:1px dashed #BBB; background:#FAFAFA; border-radius:4px; padding:8px 18px; font-size:13px;
+          cursor:pointer; color:#555;}
+  .rowBtn:hover{background:#F0F0F0;}
+  .clLegend{font-size:12px; color:var(--sub);}
+
+  /* ── 설정 모달 ───────────────────────────── */
+  .modal{position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:center;
+         justify-content:center; z-index:200; padding:20px;}
+  .modal.on{display:flex;}
+  .modalCard{background:#FFF; border-radius:12px; padding:28px 30px; width:100%; max-width:420px;
+             box-shadow:0 10px 32px rgba(0,0,0,.2);}
+  .modalCard h2{font-size:19px; font-weight:900; margin-bottom:18px;}
+  .setRow{margin-bottom:20px;}
+  .setRow h5{font-size:13px; font-weight:700; color:#555; margin-bottom:9px;}
+  .themeGrid{display:flex; gap:10px; flex-wrap:wrap;}
+  .thBtn{display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer;
+         border:none; background:none; font-size:11.5px; color:#555;}
+  .thBtn .sw2{width:42px; height:42px; border-radius:10px; border:1px solid rgba(0,0,0,.12);}
+  .thBtn.sel .sw2{outline:3px solid var(--acc); outline-offset:2px;}
+  .thBtn.sel{font-weight:700; color:var(--ink);}
+  .modalFoot{display:flex; justify-content:flex-end; gap:8px; margin-top:6px;}
+
+  /* ── 모바일 ─────────────────────────────── */
+  @media (max-width: 900px){
+    body{padding:8px 8px 30px;}
+    .topbar h1{font-size:19px; letter-spacing:2px;}
+    .sheet{padding:14px 12px 22px;}
+    .monthLayout{flex-direction:column;}
+    .side{width:100%; flex-direction:row; overflow-x:auto; padding-bottom:4px;}
+    .side .panel{min-width:190px; flex:none;}
+    .calHead .ym{font-size:23px;}
+    .cal td{height:96px;}
+    .statCard{padding:12px 14px; gap:14px;}
+    .circ{width:48px; height:48px; font-size:17px;}
+    .loginCard{padding:28px 22px;}
+  }
+</style>
+</head>
+<body data-theme="black">
+
+<!-- ═══════════ 로그인 화면 ═══════════ -->
+<div id="loginScreen">
+  <div class="loginCard">
+    <h1>업무진행표</h1>
+    <p class="desc">이름을 입력해 시작하세요.<br>처음 입력한 이름은 계정처럼 저장되고, 다음에 열 때 자동으로 이어집니다.</p>
+    <div id="accList"></div>
+    <div class="loginRow">
+      <input id="loginName" placeholder="이름 입력" maxlength="20"
+             onkeydown="if(event.key==='Enter')startLogin()">
+      <button onclick="startLogin()">시작</button>
+    </div>
+    <div id="cloudNote"></div>
+  </div>
+</div>
+
+<!-- ═══════════ 메인 앱 ═══════════ -->
+<div id="app" style="display:none;">
+  <div class="topbar">
+    <h1>업무진행표</h1>
+    <div class="tbRight">
+      <span id="saveState"></span>
+      <span class="userChip">👤 <b id="userNameLb"></b></span>
+      <button class="gearBtn" onclick="openSettings()">⚙ 설정</button>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabBar">
+    <div class="tab on" data-pane="p-input">✎ 입력</div>
+    <div class="tab" data-pane="p-month">📅 월간 캘린더 + 분석</div>
+    <div class="tab" data-pane="p-year">🗓 연간 캘린더</div>
+    <div class="tab plus" title="체크리스트 탭 추가">＋</div>
+  </div>
+
+  <div class="sheet" id="paneHost">
+
+    <!-- ① 입력 -->
+    <div class="pane on" id="p-input">
+      <div class="secTitle" id="formTitle">새 업무 입력</div>
+      <div class="formBox">
+        <div class="fRow">
+          <label class="f">구분
+            <select id="fKind"><option>할일</option><option>일정</option><option>기타</option></select>
+          </label>
+          <label class="f">날짜
+            <input type="date" id="fDate">
+          </label>
+          <label class="f">카테고리
+            <select id="fCat"></select>
+          </label>
+          <div class="f">우선순위
+            <div class="prioBtns" id="fPrio">
+              <button type="button" class="pBtn" data-v="hi"><span class="dot hi"></span>높음</button>
+              <button type="button" class="pBtn sel" data-v="mid"><span class="dot mid"></span>중간</button>
+              <button type="button" class="pBtn" data-v="lo"><span class="dot lo"></span>낮음</button>
+            </div>
+          </div>
+          <label class="f" style="flex:1; min-width:200px;">업무
+            <input type="text" id="fTitle" placeholder="업무 내용 입력">
+          </label>
+          <label class="f">진행률
+            <select id="fProg"></select>
+          </label>
+          <label class="f" style="min-width:150px;">비고
+            <input type="text" id="fNote" placeholder="메모">
+          </label>
+          <button class="addBtn" id="fSubmit" onclick="submitTask()">＋ 추가</button>
+          <button class="ghostBtn" id="fCancel" onclick="cancelEdit()">취소</button>
+        </div>
+
+        <div class="catPanel">
+          <div style="font-size:13px; color:#555; font-weight:700; margin-bottom:8px;">카테고리 관리
+            <span style="font-weight:400; color:#888;">— 이름 입력 → 색상 선택 → 추가 (최대 10개)</span>
+          </div>
+          <div class="fRow" style="align-items:center;">
+            <input type="text" id="catName" placeholder="새 카테고리 이름" maxlength="12"
+                   style="border:1px solid #CFCFCF; border-radius:4px; padding:7px 9px; font-size:13px;">
+            <div class="swatches" id="swatches"></div>
+            <button class="addBtn sm" onclick="addCategory()">카테고리 추가</button>
+          </div>
+          <div class="catList" id="catList"></div>
+        </div>
+      </div>
+
+      <div class="secTitle">등록된 업무 <small>열 제목을 누르면 정렬돼요</small></div>
+      <div class="searchBox">
+        🔍 <input type="text" id="q" placeholder="업무명 검색" oninput="renderTaskTable()">
+        <span class="cnt" id="qCnt"></span>
+      </div>
+      <div class="tScroll">
+        <table class="list">
+          <thead>
+            <tr>
+              <th style="width:56px;" onclick="setSort('kind')">구분 <span class="arr" id="arr-kind">▾</span></th>
+              <th style="width:118px;" onclick="setSort('date')">날짜 <span class="arr" id="arr-date">▾</span></th>
+              <th style="width:100px;" onclick="setSort('cat')">카테고리 <span class="arr" id="arr-cat">▾</span></th>
+              <th style="width:88px;" onclick="setSort('prio')">우선순위 <span class="arr" id="arr-prio">▾</span></th>
+              <th style="text-align:left;">업무</th>
+              <th style="width:76px;" onclick="setSort('prog')">진행률 <span class="arr" id="arr-prog">▾</span></th>
+              <th style="text-align:left; width:180px;">비고</th>
+              <th style="width:76px;">관리</th>
+            </tr>
+          </thead>
+          <tbody id="taskBody"></tbody>
+        </table>
+      </div>
+      <div class="hint">※ ✎ 수정 / × 삭제. 완료(100%) 업무는 회색+취소선으로 표시됩니다.</div>
+    </div>
+
+    <!-- ② 월간 캘린더 + 분석 -->
+    <div class="pane" id="p-month">
+      <div class="monthLayout">
+        <div class="monthMain">
+          <div class="calHead">
+            <button class="nav" onclick="moveMonth(-1)">◀</button>
+            <span class="ym" id="ymLabel"></span>
+            <button class="nav" onclick="moveMonth(1)">▶</button>
+            <div class="legend">
+              <span><span class="dot hi"></span>높음</span>
+              <span><span class="dot mid"></span>중간</span>
+              <span><span class="dot lo"></span>낮음</span>
+              <span><span class="pie" style="--p:60"></span>진행률</span>
+              <span><span class="check">✔</span>완료</span>
+              <span><span class="clock">🕐</span>일정</span>
+            </div>
+          </div>
+          <div class="calScroll"><table class="cal" id="calTable"></table></div>
+          <div class="hint">※ 업무를 누르면 입력 탭에서 바로 수정할 수 있어요. 오른쪽 필터를 끄고 켜면 캘린더와 분석이 함께 바뀝니다.</div>
+
+          <div class="analysis">
+            <div class="secTitle" id="anaTitle"></div>
+            <div id="anaBox"></div>
+          </div>
+        </div>
+
+        <div class="side">
+          <div class="panel">
+            <div class="yearBox">
+              <button onclick="moveYear(-1)">◀</button><span id="ymYear"></span><button onclick="moveYear(1)">▶</button>
+            </div>
+            <h4>월</h4>
+            <div class="mGrid" id="mGrid"></div>
+          </div>
+          <div class="panel"><h4>구분</h4><div class="pillRow" id="fltKind"></div></div>
+          <div class="panel"><h4>카테고리</h4><div id="fltCat"></div></div>
+          <div class="panel"><h4>상태</h4><div class="pillRow" id="fltStatus"></div></div>
+          <div class="panel"><h4>우선순위</h4><div class="pillRow" id="fltPrio"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ③ 연간 캘린더 -->
+    <div class="pane" id="p-year">
+      <div class="yHead">
+        <button class="nav" onclick="moveYearView(-1)">◀</button>
+        <span class="ym" id="yvLabel"></span>
+        <button class="nav" onclick="moveYearView(1)">▶</button>
+        <span class="hint" style="margin:0;">칸을 누르면 해당 월의 월간 캘린더로 이동해요</span>
+      </div>
+      <div class="yScroll" id="yScroll"><table class="year" id="yearGrid"></table></div>
+      <div class="hint">※ 상단 = 월+일자, 왼쪽 = 카테고리(색상별 한 줄), 빨간 세로선 = 오늘. 색칠된 칸 = 그날 해당 카테고리 업무가 있는 날.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════ 설정 모달 ═══════════ -->
+<div class="modal" id="settingsModal" onclick="if(event.target===this)closeSettings()">
+  <div class="modalCard">
+    <h2>⚙ 설정</h2>
+    <div class="setRow">
+      <h5>계정</h5>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="userChip">👤 <b id="setUserLb"></b></span>
+        <button class="miniBtn" onclick="changeAccount()">계정 변경</button>
+      </div>
+    </div>
+    <div class="setRow">
+      <h5>바탕 색상</h5>
+      <div class="themeGrid" id="themeGrid"></div>
+    </div>
+    <div class="setRow">
+      <h5>데이터 저장</h5>
+      <div class="hint" id="storageInfo" style="margin:0;"></div>
+    </div>
+    <div class="modalFoot">
+      <button class="addBtn sm" onclick="closeSettings()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════
+   ★★★ Firebase 설정 — 이 부분만 은영님 프로젝트 값으로 교체 ★★★
+   Firebase 콘솔 → 프로젝트 설정 → 내 앱 → SDK 설정의 firebaseConfig를
+   그대로 복사해서 아래에 붙여넣으면 여러 기기에서 실시간 연동됩니다.
+   (근태 앱과 같은 프로젝트를 써도 planner/ 경로에 따로 저장되어 안전해요)
+   붙여넣기 전에는 이 컴퓨터(브라우저)에만 저장되는 로컬 모드로 동작합니다.
+═══════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyCKScTlKUfdzGjXX2A8v4kCAjOSG9ddLLM",
+  authDomain: "budget-ab15b.firebaseapp.com",
+  databaseURL: "https://budget-ab15b-default-rtdb.firebaseio.com",
+  projectId: "budget-ab15b",
+  storageBucket: "budget-ab15b.firebasestorage.app",
+  messagingSenderId: "1038388612689",
+  appId: "1:1038388612689:web:830d6ec56b0ba4a203f270"
+};
+
+/* ── 전역 ─────────────────────────────────── */
+const PALETTE = ['#FFD8B8','#FDF0A8','#F9C9D8','#C4E8CC','#C2DDF2','#DCD2F0','#F6C6C0','#DDEBC0','#BCE3DE','#E9E0CE'];
+const THEMES = {
+  black : {label:'검정',  bg:'#F4F4F4', head:'#3A3A3A', acc:'#1E1E1E', selBg:'#E3E3E3', selBd:'#9E9E9E'},
+  yellow: {label:'노랑',  bg:'#FDF6E0', head:'#DFA92B', acc:'#9C750B', selBg:'#FAEBB8', selBd:'#DFA92B'},
+  sky   : {label:'하늘',  bg:'#EFF6FB', head:'#5E9DD4', acc:'#2F639C', selBg:'#D6E9F8', selBd:'#5E9DD4'},
+  purple: {label:'연보라', bg:'#F5F1FA', head:'#9A85C6', acc:'#6A51A3', selBg:'#E7DFF5', selBd:'#9A85C6'},
+  green : {label:'연두',  bg:'#F2F8EC', head:'#7DB255', acc:'#4E7A30', selBg:'#DFF0D0', selBd:'#7DB255'},
+};
+const PRIO = {hi:'높음', mid:'중간', lo:'낮음'};
+const PRIO_ORD = {hi:0, mid:1, lo:2};
+
+let USE_FB = false, db = null, dbRef = null;
+try{
+  if(typeof firebase !== 'undefined' && firebaseConfig.databaseURL && firebaseConfig.databaseURL.indexOf('https://') === 0){
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+    USE_FB = true;
+  }
+}catch(e){ console.warn('Firebase 초기화 실패 — 로컬 모드로 동작', e); }
+
+let state = null;          // 현재 계정 데이터
+let userKey = '';          // DB 경로용 키
+let lastWritten = '';      // 원격 echo 방지
+let pendingRemote = null;  // 입력 중 원격 변경 보류
+let saveTimer = null;
+let editId = null;         // 수정 중인 업무 id
+let selPrio = 'mid';       // 폼 우선순위
+let selSwatch = 0;         // 카테고리 색상 선택
+let sortKey = 'date', sortDir = 1;
+const now = new Date();
+let ym = {y: now.getFullYear(), m: now.getMonth()+1};   // 월간 보기
+let yearView = now.getFullYear();                        // 연간 보기
+let flt = {kind:new Set(['할일','일정','기타']), cat:new Set(), status:new Set(['pre','ing','done']), prio:new Set(['hi','mid','lo'])};
+
+/* ── 유틸 ─────────────────────────────────── */
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function sanitizeKey(name){ return name.trim().replace(/[.#$\[\]\/\s]/g,'_'); }
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function daysInMonth(y,m){ if(m===2) return (y%4===0&&y%100!==0)||y%400===0 ? 29 : 28; return [4,6,9,11].includes(m)?30:31; }
+function statusOf(t){ const p=Number(t.prog)||0; return p>=100?'done':p>0?'ing':'pre'; }
+function catById(id){ return (state.categories||[]).find(c=>c.id===id); }
+function weekdayKo(dateStr){ return ['일','월','화','수','목','금','토'][new Date(dateStr+'T00:00:00').getDay()]; }
+
+function normalize(data, name){
+  const d = data || {};
+  d.name = d.name || name;
+  d.categories = Array.isArray(d.categories) ? d.categories : [];
+  d.tasks = Array.isArray(d.tasks) ? d.tasks : [];
+  d.checklists = Array.isArray(d.checklists) ? d.checklists : [];
+  d.checklists.forEach(c=>{ c.items = Array.isArray(c.items) ? c.items : []; c.items.forEach(it=>{ it.t=it.t||''; it.s=Number(it.s)||0; it.n=it.n||''; }); });
+  d.settings = d.settings || {};
+  d.settings.theme = d.settings.theme || 'black';
+  return d;
+}
+
+/* ── 저장 / 동기화 ─────────────────────────── */
+function save(){
+  if(!state) return;
+  document.getElementById('saveState').textContent = '저장 중…';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{
+    const json = JSON.stringify(state);
+    lastWritten = json;
+    localStorage.setItem('planner_data_' + userKey, json);
+    if(USE_FB){
+      db.ref('planner/accounts/' + userKey).set(JSON.parse(json))
+        .then(()=>{ document.getElementById('saveState').textContent = '✓ 저장됨'; })
+        .catch(()=>{ document.getElementById('saveState').textContent = '⚠ 저장 실패(로컬 보관)'; });
+    }else{
+      document.getElementById('saveState').textContent = '✓ 저장됨(이 기기)';
+    }
+  }, 450);
+}
+
+function attachRemote(){
+  if(!USE_FB) return;
+  if(dbRef) dbRef.off();
+  dbRef = db.ref('planner/accounts/' + userKey);
+  dbRef.on('value', snap=>{
+    const val = snap.val();
+    if(!val) return;
+    const json = JSON.stringify(normalize(val, state ? state.name : ''));
+    if(json === lastWritten || json === JSON.stringify(state)) return;
+    const ae = document.activeElement;
+    if(ae && (ae.tagName==='INPUT' || ae.tagName==='SELECT' || ae.isContentEditable)){
+      pendingRemote = json;   // 입력 중이면 보류
+      ae.addEventListener('blur', applyPending, {once:true});
+      return;
+    }
+    state = JSON.parse(json);
+    renderAll();
+  });
+}
+function applyPending(){
+  if(!pendingRemote) return;
+  state = JSON.parse(pendingRemote);
+  pendingRemote = null;
+  renderAll();
+}
+
+/* ── 로그인 ───────────────────────────────── */
+function localAccounts(){
+  try{ return JSON.parse(localStorage.getItem('planner_accounts')||'[]'); }catch(e){ return []; }
+}
+function rememberAccount(name){
+  const list = localAccounts();
+  if(!list.includes(name)){ list.push(name); localStorage.setItem('planner_accounts', JSON.stringify(list)); }
+}
+function renderAccList(names){
+  const box = document.getElementById('accList');
+  box.innerHTML = '';
+  names.forEach(n=>{
+    const b = document.createElement('button');
+    b.textContent = '👤 ' + n;
+    b.onclick = ()=>login(n);
+    box.appendChild(b);
+  });
+}
+function showLogin(){
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('cloudNote').innerHTML = USE_FB
+    ? '☁ 클라우드 연동 모드 — 어느 기기에서든 같은 이름으로 열면 이어집니다'
+    : '💾 로컬 모드 — 현재 이 기기에만 저장됩니다.<br>파일 상단에 Firebase 설정을 넣으면 폰·컴퓨터 연동이 켜져요.';
+  renderAccList(localAccounts());
+  if(USE_FB){
+    db.ref('planner/accounts').once('value').then(snap=>{
+      const v = snap.val() || {};
+      const names = Object.keys(v).map(k=>(v[k]&&v[k].name)||k);
+      const merged = [...new Set([...names, ...localAccounts()])];
+      renderAccList(merged);
+    }).catch(()=>{});
+  }
+}
+function startLogin(){
+  const name = document.getElementById('loginName').value.trim();
+  if(!name){ alert('이름을 입력해주세요.'); return; }
+  login(name);
+}
+function login(name){
+  userKey = sanitizeKey(name);
+  if(!userKey){ alert('사용할 수 없는 이름이에요.'); return; }
+  const finish = data=>{
+    state = normalize(data, name);
+    rememberAccount(name);
+    localStorage.setItem('planner_user', name);
+    lastWritten = JSON.stringify(state);
+    localStorage.setItem('planner_data_'+userKey, lastWritten);
+    if(USE_FB){ db.ref('planner/accounts/'+userKey).set(JSON.parse(lastWritten)).catch(()=>{}); attachRemote(); }
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('loginName').value = '';
+    flt.cat = new Set((state.categories||[]).map(c=>c.id));
+    renderAll();
+  };
+  const cached = localStorage.getItem('planner_data_' + userKey);
+  if(USE_FB){
+    db.ref('planner/accounts/' + userKey).once('value')
+      .then(snap=> finish(snap.val() || (cached ? JSON.parse(cached) : null)))
+      .catch(()=> finish(cached ? JSON.parse(cached) : null));
+  }else{
+    finish(cached ? JSON.parse(cached) : null);
+  }
+}
+function changeAccount(){
+  if(dbRef) dbRef.off();
+  localStorage.removeItem('planner_user');
+  state = null; closeSettings(); showLogin();
+}
+
+/* ── 테마 / 설정 ──────────────────────────── */
+function applyTheme(key){
+  const t = THEMES[key] || THEMES.black;
+  const r = document.documentElement.style;
+  r.setProperty('--bg', t.bg); r.setProperty('--head', t.head);
+  r.setProperty('--acc', t.acc); r.setProperty('--selBg', t.selBg); r.setProperty('--selBd', t.selBd);
+  document.body.dataset.theme = key;
+}
+function renderThemeGrid(){
+  const cur = state ? state.settings.theme : 'black';
+  document.getElementById('themeGrid').innerHTML = Object.keys(THEMES).map(k=>
+    `<button class="thBtn ${k===cur?'sel':''}" onclick="setTheme('${k}')">
+       <span class="sw2" style="background:${THEMES[k].head}"></span>${THEMES[k].label}</button>`).join('');
+}
+function setTheme(k){
+  state.settings.theme = k;
+  applyTheme(k); renderThemeGrid(); save();
+}
+function openSettings(){
+  document.getElementById('setUserLb').textContent = state.name;
+  document.getElementById('storageInfo').innerHTML = USE_FB
+    ? '☁ 클라우드 연동 중 — 같은 이름으로 어느 기기에서든 열 수 있어요'
+    : '💾 이 기기에만 저장 중 — 파일 상단에 Firebase 설정을 넣으면 기기 간 연동이 켜져요';
+  renderThemeGrid();
+  document.getElementById('settingsModal').classList.add('on');
+}
+function closeSettings(){ document.getElementById('settingsModal').classList.remove('on'); }
+
+/* ── 탭 ──────────────────────────────────── */
+const tabBar = document.getElementById('tabBar');
+tabBar.addEventListener('click', e=>{
+  const tab = e.target.closest('.tab');
+  if(!tab) return;
+  if(tab.classList.contains('plus')){ addChecklist(); return; }
+  if(e.target.classList.contains('tx')){ delChecklist(tab.dataset.cl); return; }
+  activate(tab);
+});
+function activate(tab){
+  if(!tab) return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  tab.classList.add('on');
+  const id = tab.dataset.pane;
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on', p.id===id));
+  if(id==='p-year') requestAnimationFrame(scrollToToday);
+}
+function activateById(paneId){ activate(document.querySelector(`.tab[data-pane="${paneId}"]`)); }
+
+/* ── 카테고리 ─────────────────────────────── */
+function renderSwatches(){
+  document.getElementById('swatches').innerHTML = PALETTE.map((c,i)=>
+    `<div class="sw ${i===selSwatch?'sel':''}" style="background:${c}" onclick="selSwatch=${i};renderSwatches()"></div>`).join('');
+}
+function addCategory(){
+  const nameEl = document.getElementById('catName');
+  const name = nameEl.value.trim();
+  if(!name){ alert('카테고리 이름을 입력해주세요.'); return; }
+  if(state.categories.length >= 10){ alert('카테고리는 최대 10개까지 만들 수 있어요.'); return; }
+  if(state.categories.some(c=>c.name===name)){ alert('같은 이름의 카테고리가 이미 있어요.'); return; }
+  const cat = {id:uid(), name, color:PALETTE[selSwatch]};
+  state.categories.push(cat);
+  flt.cat.add(cat.id);
+  nameEl.value = '';
+  save(); renderCats(); renderMonth(); renderYear();
+}
+function delCategory(id){
+  const cat = catById(id); if(!cat) return;
+  const used = state.tasks.filter(t=>t.catId===id).length;
+  if(!confirm(`'${cat.name}' 카테고리를 삭제할까요?` + (used?`\n(이 카테고리의 업무 ${used}건은 '미분류'로 남아요)`:''))) return;
+  state.categories = state.categories.filter(c=>c.id!==id);
+  flt.cat.delete(id);
+  save(); renderCats(); renderTaskTable(); renderMonth(); renderYear();
+}
+function renderCats(){
+  // 폼 선택칸 — 추가된 카테고리만
+  const sel = document.getElementById('fCat');
+  const prev = sel.value;
+  sel.innerHTML = state.categories.length
+    ? state.categories.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')
+    : '<option value="">카테고리를 먼저 추가해주세요</option>';
+  if([...sel.options].some(o=>o.value===prev)) sel.value = prev;
+  // 관리 목록
+  document.getElementById('catList').innerHTML = state.categories.map(c=>
+    `<span class="chip" style="background:${c.color}">${esc(c.name)}<span class="x" onclick="delCategory('${c.id}')">×</span></span>`).join('')
+    || '<span class="hint" style="margin:0;">아직 카테고리가 없어요. 위에서 첫 카테고리를 추가해보세요.</span>';
+  // 월간 필터
+  document.getElementById('fltCat').innerHTML = state.categories.map(c=>
+    `<div class="pill ${flt.cat.has(c.id)?'sel':''}" style="background:${c.color}" onclick="toggleFlt('cat','${c.id}')">${esc(c.name)}</div>`).join('')
+    || '<span class="hint" style="margin:0;">카테고리 없음</span>';
+}
+
+/* ── 업무 입력/수정 ───────────────────────── */
+document.getElementById('fPrio').addEventListener('click', e=>{
+  const b = e.target.closest('.pBtn'); if(!b) return;
+  selPrio = b.dataset.v;
+  document.querySelectorAll('#fPrio .pBtn').forEach(x=>x.classList.toggle('sel', x===b));
+});
+function initProgSelect(){
+  document.getElementById('fProg').innerHTML =
+    Array.from({length:11},(_,i)=>`<option value="${i*10}">${i*10}%</option>`).join('');
+}
+function submitTask(){
+  const title = document.getElementById('fTitle').value.trim();
+  const catId = document.getElementById('fCat').value;
+  const date = document.getElementById('fDate').value;
+  if(!title){ alert('업무 내용을 입력해주세요.'); return; }
+  if(!date){ alert('날짜를 선택해주세요.'); return; }
+  if(!catId){ alert('카테고리를 먼저 추가한 뒤 선택해주세요.'); return; }
+  const data = {
+    kind: document.getElementById('fKind').value,
+    date, catId, prio: selPrio, title,
+    prog: Number(document.getElementById('fProg').value),
+    note: document.getElementById('fNote').value.trim(),
+  };
+  if(editId){
+    const t = state.tasks.find(x=>x.id===editId);
+    if(t) Object.assign(t, data);
+    cancelEdit();
+  }else{
+    state.tasks.push(Object.assign({id:uid()}, data));
+    document.getElementById('fTitle').value = '';
+    document.getElementById('fNote').value = '';
+  }
+  save(); renderTaskTable(); renderMonth(); renderYear();
+}
+function editTask(id){
+  const t = state.tasks.find(x=>x.id===id); if(!t) return;
+  editId = id;
+  document.getElementById('fKind').value = t.kind;
+  document.getElementById('fDate').value = t.date;
+  renderCats();
+  document.getElementById('fCat').value = t.catId;
+  selPrio = t.prio;
+  document.querySelectorAll('#fPrio .pBtn').forEach(x=>x.classList.toggle('sel', x.dataset.v===t.prio));
+  document.getElementById('fTitle').value = t.title;
+  document.getElementById('fProg').value = String(Number(t.prog)||0);
+  document.getElementById('fNote').value = t.note||'';
+  document.getElementById('fSubmit').textContent = '수정 저장';
+  document.getElementById('fCancel').style.display = 'inline-block';
+  document.getElementById('formTitle').textContent = '업무 수정 중';
+  activateById('p-input');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function cancelEdit(){
+  editId = null;
+  document.getElementById('fTitle').value = '';
+  document.getElementById('fNote').value = '';
+  document.getElementById('fSubmit').textContent = '＋ 추가';
+  document.getElementById('fCancel').style.display = 'none';
+  document.getElementById('formTitle').textContent = '새 업무 입력';
+}
+function delTask(id){
+  const t = state.tasks.find(x=>x.id===id); if(!t) return;
+  if(!confirm(`'${t.title}' 업무를 삭제할까요?`)) return;
+  state.tasks = state.tasks.filter(x=>x.id!==id);
+  if(editId===id) cancelEdit();
+  save(); renderTaskTable(); renderMonth(); renderYear();
+}
+
+/* ── 업무 테이블 ──────────────────────────── */
+function setSort(key){
+  if(sortKey===key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
+  renderTaskTable();
+}
+function renderTaskTable(){
+  const q = document.getElementById('q').value.trim();
+  let rows = state.tasks.filter(t=>!q || t.title.includes(q));
+  const catName = t=>{ const c=catById(t.catId); return c?c.name:'미분류'; };
+  rows.sort((a,b)=>{
+    let v = 0;
+    if(sortKey==='date') v = a.date.localeCompare(b.date);
+    else if(sortKey==='prio') v = PRIO_ORD[a.prio]-PRIO_ORD[b.prio];
+    else if(sortKey==='prog') v = (Number(a.prog)||0)-(Number(b.prog)||0);
+    else if(sortKey==='cat') v = catName(a).localeCompare(catName(b),'ko');
+    else if(sortKey==='kind') v = a.kind.localeCompare(b.kind,'ko');
+    if(v===0) v = a.date.localeCompare(b.date);
+    return v*sortDir;
+  });
+  document.querySelectorAll('.list .arr').forEach(s=>s.textContent='▾');
+  const arr = document.getElementById('arr-'+sortKey);
+  if(arr) arr.textContent = sortDir===1?'▲':'▼';
+
+  const today = todayStr();
+  document.getElementById('taskBody').innerHTML = rows.map(t=>{
+    const c = catById(t.catId);
+    const done = statusOf(t)==='done';
+    const isSch = t.kind==='일정';
+    return `<tr class="${done?'done':''}">
+      <td align="center">${esc(t.kind)}</td>
+      <td align="center" ${t.date===today?'style="color:var(--blue);font-weight:700;"':''}>${t.date} ${weekdayKo(t.date)}</td>
+      <td align="center">${c?`<span class="chip" style="background:${c.color}">${esc(c.name)}</span>`:'<span class="chip" style="background:#E6E6E6">미분류</span>'}</td>
+      <td><span class="pcell"><span class="dot ${t.prio}"></span>${PRIO[t.prio]}</span></td>
+      <td class="taskName">${esc(t.title)}</td>
+      <td><span class="pctCell">${isSch?'–':(Number(t.prog)||0)+'%'}</span></td>
+      <td>${esc(t.note||'')}</td>
+      <td><span class="rowActs">
+        <button class="miniBtn" onclick="editTask('${t.id}')">✎</button>
+        <button class="miniBtn danger" onclick="delTask('${t.id}')">×</button>
+      </span></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="8"><div class="emptyMsg">${q?'검색 결과가 없어요.':'아직 등록된 업무가 없어요. 위에서 첫 업무를 추가해보세요!'}</div></td></tr>`;
+  document.getElementById('qCnt').textContent = rows.length + '건 표시 중';
+}
+
+/* ── 월간 필터 ───────────────────────────── */
+function toggleFlt(group, val){
+  const set = flt[group];
+  if(set.has(val)){ if(set.size>0) set.delete(val); } else set.add(val);
+  renderFilters(); renderMonth();
+}
+function renderFilters(){
+  const mk = (group, items)=> items.map(([v,label])=>
+    `<div class="pill ${flt[group].has(v)?'sel':''}" onclick="toggleFlt('${group}','${v}')">${label}</div>`).join('');
+  document.getElementById('fltKind').innerHTML = mk('kind', [['할일','할일'],['일정','일정'],['기타','기타']]);
+  document.getElementById('fltStatus').innerHTML = mk('status', [['pre','시작전'],['ing','진행중'],['done','완료']]);
+  document.getElementById('fltPrio').innerHTML = mk('prio', [['hi','높음'],['mid','중간'],['lo','낮음']]);
+  renderCats(); // 카테고리 필터 포함
+}
+function passFilter(t){
+  if(!flt.kind.has(t.kind)) return false;
+  const c = catById(t.catId);
+  if(c && !flt.cat.has(c.id)) return false;   // 미분류(삭제된 카테고리)는 항상 표시
+  if(t.kind!=='일정' && !flt.status.has(statusOf(t))) return false;
+  if(!flt.prio.has(t.prio)) return false;
+  return true;
+}
+
+/* ── 월간 캘린더 ──────────────────────────── */
+function moveMonth(d){ ym.m += d; if(ym.m<1){ym.m=12;ym.y--;} if(ym.m>12){ym.m=1;ym.y++;} renderMonth(); }
+function moveYear(d){ ym.y += d; renderMonth(); }
+function gotoMonth(m){ ym = {y:yearView, m}; activateById('p-month'); renderMonth(); }
+function renderMonth(){
+  document.getElementById('ymLabel').textContent = `${ym.y}년 ${ym.m}월`;
+  document.getElementById('ymYear').textContent = ym.y;
+  document.getElementById('mGrid').innerHTML = Array.from({length:12},(_,i)=>
+    `<div class="mBtn ${i+1===ym.m?'sel':''}" onclick="ym.m=${i+1};renderMonth()">${i+1}</div>`).join('');
+
+  const mm = String(ym.m).padStart(2,'0');
+  const monthTasks = state.tasks.filter(t=>t.date.startsWith(`${ym.y}-${mm}-`));
+  const shown = monthTasks.filter(passFilter);
+  const byDay = {};
+  shown.forEach(t=>{ const d=Number(t.date.slice(8,10)); (byDay[d]=byDay[d]||[]).push(t); });
+  Object.values(byDay).forEach(list=>list.sort((a,b)=>PRIO_ORD[a.prio]-PRIO_ORD[b.prio]));
+
+  const dim = daysInMonth(ym.y, ym.m);
+  const first = new Date(ym.y, ym.m-1, 1).getDay();
+  const prevDim = daysInMonth(ym.m===1?ym.y-1:ym.y, ym.m===1?12:ym.m-1);
+  const totalCells = Math.ceil((first+dim)/7)*7;
+  const td = todayStr();
+
+  let h = '<tr><th class="sun">SUN</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th></tr>';
+  for(let i=0; i<totalCells; i++){
+    if(i%7===0) h += '<tr>';
+    const dayN = i - first + 1;
+    const isSun = i%7===0;
+    if(dayN < 1){
+      h += `<td class="out ${isSun?'sunC':''}"><div class="dnum">${prevDim+dayN}</div></td>`;
+    }else if(dayN > dim){
+      h += `<td class="out ${isSun?'sunC':''}"><div class="dnum">${dayN-dim}</div></td>`;
+    }else{
+      const dateStr = `${ym.y}-${mm}-${String(dayN).padStart(2,'0')}`;
+      const cls = [isSun?'sunC':'', dateStr===td?'today':''].join(' ');
+      let items = (byDay[dayN]||[]).map(t=>{
+        const done = statusOf(t)==='done', sch = t.kind==='일정';
+        return `<div class="task ${done?'done':''}" onclick="editTask('${t.id}')" title="${esc(t.title)}${t.note?' — '+esc(t.note):''}">
+          ${sch?'<span class="clock">🕐</span>':''}<span class="dot ${t.prio}"></span>
+          <span class="t">${esc(t.title)}</span>
+          ${sch?'':done?'<span class="check">✔</span>':`<span class="pie" style="--p:${Number(t.prog)||0}"></span>`}
+        </div>`;
+      }).join('');
+      h += `<td class="${cls}"><div class="dnum">${dayN}</div>${items}</td>`;
+    }
+    if(i%7===6) h += '</tr>';
+  }
+  document.getElementById('calTable').innerHTML = h;
+  renderAnalysis(shown);
+}
+
+/* ── 분석 ────────────────────────────────── */
+function renderAnalysis(tasks){
+  document.getElementById('anaTitle').innerHTML = `📊 ${ym.m}월 분석 <small>왼쪽 필터가 적용된 업무 기준</small>`;
+  const box = document.getElementById('anaBox');
+  if(!tasks.length){ box.innerHTML = '<div class="emptyMsg">이 달에 표시할 업무가 없어요.</div>'; return; }
+
+  const withProg = tasks.filter(t=>t.kind!=='일정');
+  const total = tasks.length;
+  const pre = withProg.filter(t=>statusOf(t)==='pre').length;
+  const ing = withProg.filter(t=>statusOf(t)==='ing').length;
+  const done = withProg.filter(t=>statusOf(t)==='done').length;
+  const sch = total - withProg.length;
+  const rate = withProg.length ? Math.round(done/withProg.length*100) : 0;
+  const pct = n=> withProg.length ? (n/withProg.length*100) : 0;
+
+  // 우선순위별 완료/전체
+  const prios = ['hi','mid','lo'].map(p=>{
+    const all = tasks.filter(t=>t.prio===p);
+    const dn = all.filter(t=>t.kind!=='일정' && statusOf(t)==='done').length;
+    return {p, all:all.length, dn};
+  });
+  const maxP = Math.max(1, ...prios.map(x=>x.all));
+
+  // 카테고리별
+  const catCnt = {};
+  tasks.forEach(t=>{ catCnt[t.catId] = (catCnt[t.catId]||0)+1; });
+  const catRows = Object.entries(catCnt).map(([id,n])=>{
+    const c = catById(id);
+    return {name:c?c.name:'미분류', color:c?c.color:'#E6E6E6', n};
+  }).sort((a,b)=>b.n-a.n);
+  const maxC = Math.max(1, ...catRows.map(r=>r.n));
+
+  // 진행률 분포
+  const bins = Array(11).fill(0);
+  withProg.forEach(t=>{ bins[Math.min(10, Math.round((Number(t.prog)||0)/10))]++; });
+  const maxB = Math.max(1, ...bins);
+
+  box.innerHTML = `
+    <div class="statRow">
+      <div class="statCard" style="flex-direction:column; align-items:stretch;">
+        <div style="display:flex; gap:22px;">
+          <div class="cWrap"><span class="lb">전체</span><div class="circ">${total}</div></div>
+          <div class="cWrap"><span class="lb pre">시작전</span><div class="circ">${pre}</div></div>
+          <div class="cWrap"><span class="lb ing">진행중</span><div class="circ">${ing}</div></div>
+          <div class="cWrap"><span class="lb fin">완료</span><div class="circ">${done}</div></div>
+        </div>
+        <div class="stackBar">
+          <i style="width:${pct(pre)}%; background:#C9C9C9;"></i>
+          <i style="width:${pct(ing)}%; background:#8FCB92;"></i>
+          <i style="width:${pct(done)}%; background:#9FC3E8;"></i>
+        </div>
+        ${sch?`<div class="hint" style="margin-top:8px;">🕐 일정 ${sch}건은 진행률 집계에서 제외</div>`:''}
+      </div>
+      <div class="statCard">
+        <div class="bigDonut" style="--p:${rate}"><b>${rate}%<small>완료율</small></b></div>
+      </div>
+      <div class="statCard">
+        <div class="vbars">
+          ${prios.map(x=>`
+            <div class="vb ${x.p}B"><span class="num">${x.dn} / ${x.all}</span>
+              <div class="col" style="height:${Math.round(x.all/maxP*100)}%">
+                <i style="height:${x.all?Math.round(x.dn/x.all*100):0}%;"></i></div>
+              <span class="lb">${PRIO[x.p]}</span></div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="charts">
+      <div class="chartBox hbars">
+        <h3>카테고리별 업무 수</h3>
+        ${catRows.map(r=>`
+          <div class="row"><span class="lb">${esc(r.name)}</span>
+            <span class="tr"><i style="width:${Math.round(r.n/maxC*100)}%; background:${r.color}"></i></span>
+            <span class="n">${r.n}</span></div>`).join('')}
+      </div>
+      <div class="chartBox">
+        <h3>진행률 분포 (10% 단위)</h3>
+        <div class="hist">
+          ${bins.map((n,i)=>`
+            <div class="hb ${i===10?'last':''}"><i style="height:${Math.round(n/maxB*90)}px"></i><span>${i*10}</span></div>`).join('')}
+        </div>
+        <div class="hint">파랑 = 진행중 구간, 초록 = 완료(100%)</div>
+      </div>
+    </div>`;
+}
+
+/* ── 연간 캘린더 ──────────────────────────── */
+function moveYearView(d){ yearView += d; renderYear(); }
+function renderYear(){
+  document.getElementById('yvLabel').textContent = `${yearView}년 한눈에 보기`;
+  const grid = document.getElementById('yearGrid');
+  if(!state.categories.length){
+    grid.innerHTML = `<tr><td style="padding:24px; border:none;"><div class="emptyMsg">카테고리를 추가하면 연간 현황이 여기에 표시돼요.</div></td></tr>`;
+    return;
+  }
+  const dims = Array.from({length:12},(_,i)=>daysInMonth(yearView, i+1));
+  // 카테고리별 날짜 집합
+  const catDates = {};
+  state.categories.forEach(c=>catDates[c.id]=new Set());
+  state.tasks.forEach(t=>{
+    if(!t.date.startsWith(yearView+'-')) return;
+    if(!catDates[t.catId]) return;
+    catDates[t.catId].add(Number(t.date.slice(5,7)) + '-' + Number(t.date.slice(8,10)));
+  });
+  const isThisYear = yearView === now.getFullYear();
+  const tm = now.getMonth()+1, tdd = now.getDate();
+
+  let h = '<tr><th class="catCol" rowspan="2">카테고리</th>';
+  for(let m=1; m<=12; m++)
+    h += `<th class="mHead ${m%2===0?'alt':''}" colspan="${dims[m-1]}">${m}월</th>`;
+  h += '</tr><tr>';
+  for(let m=1; m<=12; m++)
+    for(let d=1; d<=dims[m-1]; d++)
+      h += `<th class="dHead ${m%2===0?'alt':''} ${(isThisYear&&m===tm&&d===tdd)?'todayCol':''}">${d}</th>`;
+  h += '</tr>';
+  state.categories.forEach(c=>{
+    h += `<tr><td class="catName"><span class="dot" style="background:${c.color}"></span>${esc(c.name)}</td>`;
+    for(let m=1; m<=12; m++){
+      for(let d=1; d<=dims[m-1]; d++){
+        const fill = catDates[c.id].has(m+'-'+d) ? ` style="background:${c.color}"` : '';
+        const cls = `dcell ${m%2===0?'alt':''} ${(isThisYear&&m===tm&&d===tdd)?'todayCol':''}`;
+        h += `<td class="${cls}"${fill} onclick="gotoMonth(${m})"></td>`;
+      }
+    }
+    h += '</tr>';
+  });
+  grid.innerHTML = h;
+}
+function scrollToToday(){
+  const box = document.getElementById('yScroll');
+  if(!box) return;
+  if(yearView !== now.getFullYear()){ box.scrollLeft = 0; return; }
+  let days = 0;
+  for(let m=1; m<now.getMonth()+1; m++) days += daysInMonth(yearView, m);
+  days += now.getDate() - 1;
+  box.scrollLeft = Math.max(0, days*17 - 240);
+}
+
+/* ── 체크리스트 ───────────────────────────── */
+function addChecklist(){
+  const name = prompt('체크리스트 이름을 입력하세요', '새 체크리스트');
+  if(name===null) return;
+  const cl = {id:uid(), name:(name.trim()||'새 체크리스트'), items:[{t:'',s:0,n:''},{t:'',s:0,n:''},{t:'',s:0,n:''}]};
+  state.checklists.push(cl);
+  save(); renderChecklists();
+  activateById('p-cl-'+cl.id);
+}
+function delChecklist(id){
+  const cl = state.checklists.find(c=>c.id===id); if(!cl) return;
+  if(!confirm(`'${cl.name}' 체크리스트를 삭제할까요?`)) return;
+  state.checklists = state.checklists.filter(c=>c.id!==id);
+  save(); renderChecklists();
+  activateById('p-input');
+}
+function renameChecklist(id){
+  const cl = state.checklists.find(c=>c.id===id); if(!cl) return;
+  const name = prompt('체크리스트 이름 수정', cl.name);
+  if(name===null || !name.trim()) return;
+  cl.name = name.trim();
+  save(); renderChecklists();
+  activateById('p-cl-'+id);
+}
+function addClRow(id){
+  const cl = state.checklists.find(c=>c.id===id); if(!cl) return;
+  cl.items.push({t:'',s:0,n:''});
+  save(); renderChecklists();
+  activateById('p-cl-'+id);
+}
+function delClRow(id, idx){
+  const cl = state.checklists.find(c=>c.id===id); if(!cl) return;
+  const it = cl.items[idx];
+  if((it.t||it.n) && !confirm('이 행을 삭제할까요?')) return;
+  cl.items.splice(idx,1);
+  save(); renderChecklists();
+  activateById('p-cl-'+id);
+}
+function updClItem(id, idx, field, el){
+  const cl = state.checklists.find(c=>c.id===id); if(!cl || !cl.items[idx]) return;
+  cl.items[idx][field] = el.value;
+  save();  // 재렌더 없이 저장만 (포커스 유지)
+}
+function cycleChk(td, id, idx){
+  const cl = state.checklists.find(c=>c.id===id); if(!cl || !cl.items[idx]) return;
+  cl.items[idx].s = (Number(cl.items[idx].s)+1)%4;
+  td.dataset.s = cl.items[idx].s;
+  save();
+}
+function renderChecklists(){
+  const activeId = (document.querySelector('.tab.on')||{}).dataset ? document.querySelector('.tab.on').dataset.pane : null;
+  // 기존 동적 탭/패널 제거
+  document.querySelectorAll('.tab.clTab').forEach(t=>t.remove());
+  document.querySelectorAll('.pane.clPane').forEach(p=>p.remove());
+  const plus = tabBar.querySelector('.tab.plus');
+  state.checklists.forEach(cl=>{
+    const tab = document.createElement('div');
+    tab.className = 'tab clTab';
+    tab.dataset.pane = 'p-cl-'+cl.id;
+    tab.dataset.cl = cl.id;
+    tab.innerHTML = `<span class="tName" title="더블클릭하면 이름 수정" ondblclick="renameChecklist('${cl.id}')">☑ ${esc(cl.name)}</span><span class="tx" title="삭제">×</span>`;
+    tabBar.insertBefore(tab, plus);
+
+    const pane = document.createElement('div');
+    pane.className = 'pane clPane';
+    pane.id = 'p-cl-'+cl.id;
+    pane.innerHTML = `
+      <div class="clHead">
+        <span class="name">☑ ${esc(cl.name)}</span>
+        <button class="miniBtn" onclick="renameChecklist('${cl.id}')">✎ 이름 수정</button>
+        <button class="miniBtn danger" onclick="delChecklist('${cl.id}')">탭 삭제</button>
+      </div>
+      <div class="clScroll">
+      <table class="clTable">
+        <tr><th style="text-align:left;">항목</th><th class="thChk">확인</th><th style="text-align:left;">비고</th><th class="thDel"></th></tr>
+        ${cl.items.map((it,i)=>`
+          <tr>
+            <td><input class="clIn" value="${esc(it.t)}" placeholder="항목 입력" oninput="updClItem('${cl.id}',${i},'t',this)"></td>
+            <td class="chk" data-s="${Number(it.s)||0}" onclick="cycleChk(this,'${cl.id}',${i})"></td>
+            <td><input class="clIn" value="${esc(it.n)}" placeholder="비고 입력" oninput="updClItem('${cl.id}',${i},'n',this)"></td>
+            <td class="rowDel" onclick="delClRow('${cl.id}',${i})">×</td>
+          </tr>`).join('')}
+      </table>
+      </div>
+      <div class="clFoot">
+        <button class="rowBtn" onclick="addClRow('${cl.id}')">＋ 행 추가</button>
+        <span class="clLegend">확인칸 클릭 시 <b style="color:var(--lo)">✔</b> → <b style="color:var(--mid)">△</b> → <b style="color:var(--hi)">✕</b> → 빈칸 순으로 바뀝니다</span>
+      </div>`;
+    document.getElementById('paneHost').appendChild(pane);
+  });
+  // 활성 탭 복원
+  if(activeId && document.querySelector(`.tab[data-pane="${activeId}"]`)) activateById(activeId);
+  else activateById('p-input');
+}
+
+/* ── 전체 렌더 ───────────────────────────── */
+function renderAll(){
+  document.getElementById('userNameLb').textContent = state.name;
+  applyTheme(state.settings.theme);
+  // 처음 보는 카테고리는 필터에 자동 포함 (사용자가 끈 것은 유지)
+  renderAll._known = renderAll._known || new Set();
+  state.categories.forEach(c=>{
+    if(!renderAll._known.has(c.id)){ flt.cat.add(c.id); renderAll._known.add(c.id); }
+  });
+  renderSwatches(); renderFilters(); renderTaskTable(); renderMonth(); renderYear(); renderChecklists();
+}
+
+/* ── 시작 ────────────────────────────────── */
+initProgSelect();
+document.getElementById('fDate').value = todayStr();
+const savedUser = localStorage.getItem('planner_user');
+if(savedUser){ login(savedUser); }
+else{ showLogin(); }
+</script>
+</body>
+</html>
