@@ -91,7 +91,7 @@
   .ghostBtn{background:#FFF; color:#666; border:1px solid #CFCFCF; border-radius:4px; padding:10px 18px;
             font-size:13px; cursor:pointer; display:none;}
   .catPanel{margin-top:14px; border-top:1px solid var(--line); padding-top:13px;}
-  .swatches{display:flex; gap:8px; flex-wrap:wrap;}
+  .swatches{display:flex; gap:6px; flex-wrap:wrap; max-width:380px;}
   .sw{width:30px; height:30px; border-radius:5px; border:1px solid rgba(0,0,0,.1); cursor:pointer; position:relative;}
   .sw.sel{outline:2px solid var(--acc); outline-offset:1px;}
   .sw.sel::after{content:'✓'; position:absolute; inset:0; display:flex; align-items:center;
@@ -104,13 +104,29 @@
   .chip .ed:hover{color:var(--acc);}
   .chkLb{display:flex; align-items:center; gap:6px; font-size:12.5px; color:#666; cursor:pointer;}
   .chkLb input{cursor:pointer;}
+  .optToggles{display:flex; flex-direction:column; gap:4px; border:1px solid #CFCFCF; border-radius:4px;
+              padding:5px 9px; background:#FFF;}
+  .optField{display:none;}
+  .optField.on{display:flex;}
+
+  /* 기간 막대 */
+  .spanBar{height:15px; margin:0 -6px 2px; display:flex; align-items:center; padding:0 5px;
+           font-size:10px; overflow:hidden; white-space:nowrap; cursor:pointer; color:#3F3A30;}
+  .spanBar.st{margin-left:0; border-radius:3px 0 0 3px;}
+  .spanBar.en{margin-right:0; border-radius:0 3px 3px 0;}
+  .spanBar.st.en{border-radius:3px;}
+  .spanBar:hover{filter:brightness(.94);}
+  .spanBar .sl{overflow:hidden; text-overflow:ellipsis;}
+  .spanGap{height:15px; margin-bottom:2px;}
+  .tmv{font-size:10px; color:#7A7365; flex:none; font-variant-numeric:tabular-nums;}
+  .spanTag{font-size:10.5px; color:var(--sub); margin-top:2px;}
 
   .searchBox{display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;}
   .searchBox input{border:1px solid #CFCFCF; border-radius:4px; padding:8px 12px; font-size:13px; width:300px; max-width:100%;}
   .searchBox .cnt{font-size:12px; color:var(--sub);}
 
   .tScroll{overflow-x:auto;}
-  table.list{width:100%; border-collapse:collapse; font-size:13px; min-width:920px;}
+  table.list{width:100%; border-collapse:collapse; font-size:13px; min-width:920px; table-layout:fixed;}
   .list th{background:#EDEDED; border:1px solid var(--line); padding:7px 10px; font-weight:700; color:#444;
            font-size:12.5px; cursor:pointer; user-select:none;}
   .list th .arr{color:#999; font-size:10px;}
@@ -118,6 +134,7 @@
   .list tr:nth-child(even) td{background:#FCFCFC;}
   .list tr.done td{color:#B5B5B5; background:#F5F5F5;}
   .list tr.done .taskName{text-decoration:line-through;}
+  td.taskName{word-break:break-word; line-height:1.5;}
   .pcell{display:flex; align-items:center; gap:6px; justify-content:center;}
   .pctCell{background:var(--selBg); font-weight:700; text-align:center; font-size:12.5px; border-radius:2px;
            padding:2px 0; display:block;}
@@ -293,7 +310,8 @@
   #tmRepType{width:100%;}
   .tmRepOpt{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
   .tmRepOpt:empty{display:none;}
-  .tmEnd{display:flex; align-items:center; gap:8px; margin-top:8px; font-size:12.5px; color:#666;}
+  .tmEnd{display:flex; align-items:center; gap:12px; margin-top:8px; font-size:12.5px; color:#666; flex-wrap:wrap;}
+  .tmEnd #tmRepEnd:disabled{background:#F2F2F2; color:#AAA;}
   .tmEnd.hide{display:none;}
   #tmNote{width:100%; border:1px solid #CFCFCF; border-radius:4px; padding:9px 10px; font-size:13.5px;
           font-family:inherit; resize:vertical; line-height:1.6; color:var(--ink);}
@@ -319,6 +337,61 @@
     .statCard{padding:12px 14px; gap:14px;}
     .circ{width:48px; height:48px; font-size:17px;}
     .loginCard{padding:28px 22px;}
+  }
+
+  .printBtn{border:1px solid #CFCFCF; background:#FFF; border-radius:4px; padding:5px 12px;
+            font-size:12px; cursor:pointer; color:#555;}
+  .printBtn:hover{background:#F0F0F0;}
+  .onlyPrint{display:none;}
+  .printTitle{display:none;}
+
+  /* ── 인쇄 ───────────────────────────────── */
+  @media print{
+    @page{ size:A4 landscape; margin:9mm; }
+    *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+    body{ background:#FFF; padding:0; }
+    .topbar, .tabs, .modal, #loginScreen, .side, .analysis, .hint,
+    .nav, .printBtn, .legend .clock, .calHead .legend{ display:none !important; }
+    .sheet{ border:none; box-shadow:none; padding:0; }
+    .pane{ display:none !important; }
+    .printTitle{ display:block; font-size:15pt; font-weight:900; text-align:center; margin-bottom:6mm; }
+    .calScroll, .yScroll{ overflow:visible !important; border:none; }
+
+    /* 월간 */
+    body.pr-month #p-month{ display:block !important; }
+    body.pr-month .monthLayout{ display:block; }
+    body.pr-month .monthMain{ min-width:0; }
+    body.pr-month .calHead{ display:none; }
+    body.pr-month table.cal{ min-width:0; width:100%; }
+    body.pr-month .cal th{ padding:3pt 0; font-size:9pt; }
+    body.pr-month .cal td{ height:auto; min-height:26mm; }
+    body.pr-month .dnum{ font-size:10pt; }
+    body.pr-month .task{ font-size:7pt; margin-bottom:1.5pt; }
+    body.pr-month .spanBar{ height:11px; font-size:6.5pt; }
+    body.pr-month .spanGap{ height:11px; }
+
+    /* 연간 — 3개월씩 4페이지 */
+    body.pr-year #p-year{ display:block !important; }
+    body.pr-year #prTitleYear{ display:none !important; }
+    body.pr-year .yHead{ display:none; }
+    body.pr-year .yScroll{ display:none !important; }
+    body.pr-year #yearPrintWrap{ display:block !important; }
+    .yPage{ page-break-after:always; }
+    .yPage:last-child{ page-break-after:auto; }
+    .yPageTitle{ font-size:13pt; font-weight:900; text-align:center; margin-bottom:5mm; }
+    .yPageTitle span{ font-weight:400; font-size:10pt; color:#666; margin-left:6pt; }
+    table.yPrintTable{ border-collapse:separate; border-spacing:0; width:100%; table-layout:fixed; }
+    table.yPrintTable th, table.yPrintTable td{ border-right:1px solid #EFEFEF; border-bottom:1px solid #EFEFEF; }
+    table.yPrintTable th.catCol{ width:24mm; font-size:9pt; padding:3pt 4pt; background:#3A3A3A; color:#FFF; text-align:left; }
+    table.yPrintTable td.catName{ font-size:9pt; padding:3pt 4pt; font-weight:700; white-space:nowrap; }
+    table.yPrintTable td.catName .dot{ display:inline-block; width:7pt; height:7pt; border-radius:50%; margin-right:4pt; }
+    table.yPrintTable th.mHead{ background:#3A3A3A; color:#FFF; font-size:9pt; font-weight:700; padding:3pt 0; }
+    table.yPrintTable th.mHead.alt{ filter:brightness(1.25); }
+    table.yPrintTable th.dHead{ background:#EDEDED; color:#666; font-size:6.5pt; font-weight:500; padding:2pt 0; text-align:center; }
+    table.yPrintTable th.dHead.alt{ background:#E4E4E4; }
+    table.yPrintTable td.dcell{ height:6.5mm; }
+    table.yPrintTable td.dcell.alt{ background:#FAFAFA; }
+    table.yPrintTable .todayCol{ border-left:1.4pt solid #E14B4B !important; }
   }
 </style>
 </head>
@@ -370,6 +443,18 @@
           <label class="f">날짜
             <input type="date" id="fDate">
           </label>
+          <div class="f">옵션
+            <div class="optToggles">
+              <label class="chkLb"><input type="checkbox" id="fUseTime" onchange="toggleOpt()"> 🕒 시간</label>
+              <label class="chkLb"><input type="checkbox" id="fUseSpan" onchange="toggleOpt()"> ▬ 기간</label>
+            </div>
+          </div>
+          <label class="f optField" id="fTimeWrap">시간
+            <input type="time" id="fTime">
+          </label>
+          <label class="f optField" id="fSpanWrap">종료일
+            <input type="date" id="fSpanEnd">
+          </label>
           <label class="f">카테고리
             <select id="fCat"></select>
           </label>
@@ -408,7 +493,7 @@
 
         <div class="catPanel">
           <div style="font-size:13px; color:#555; font-weight:700; margin-bottom:8px;">카테고리 관리
-            <span style="font-weight:400; color:#888;">— 이름 입력 → 색상 선택 → 추가 (최대 10개)</span>
+            <span style="font-weight:400; color:#888;">— 이름 입력 → 색상 선택 → 추가 (최대 20개)</span>
           </div>
           <div class="fRow" style="align-items:center;">
             <input type="text" id="catName" placeholder="새 카테고리 이름" maxlength="12"
@@ -433,9 +518,9 @@
               <th style="width:118px;" onclick="setSort('date')">날짜 <span class="arr" id="arr-date">▾</span></th>
               <th style="width:100px;" onclick="setSort('cat')">카테고리 <span class="arr" id="arr-cat">▾</span></th>
               <th style="width:88px;" onclick="setSort('prio')">우선순위 <span class="arr" id="arr-prio">▾</span></th>
-              <th style="text-align:left;">업무</th>
+              <th style="text-align:left; width:25%;">업무</th>
               <th style="width:76px;" onclick="setSort('prog')">진행률 <span class="arr" id="arr-prog">▾</span></th>
-              <th style="text-align:left; width:230px;">비고</th>
+              <th style="text-align:left; width:25%;">비고</th>
               <th style="width:76px;">관리</th>
             </tr>
           </thead>
@@ -447,6 +532,7 @@
 
     <!-- ② 월간 캘린더 + 분석 -->
     <div class="pane" id="p-month">
+      <div class="printTitle" id="prTitleMonth"></div>
       <div class="monthLayout">
         <div class="monthMain">
           <div class="calHead">
@@ -460,6 +546,7 @@
               <span><span class="pie" style="--p:60"></span>진행률</span>
               <span><span class="check">✔</span>완료</span>
               <span><span class="clock">🕐</span>일정형</span>
+              <button class="printBtn" onclick="printCal('month')">🖨 인쇄</button>
             </div>
           </div>
           <div class="calScroll"><table class="cal" id="calTable"></table></div>
@@ -493,9 +580,12 @@
         <button class="nav" onclick="moveYearView(-1)">◀</button>
         <span class="ym" id="yvLabel"></span>
         <button class="nav" onclick="moveYearView(1)">▶</button>
+        <button class="printBtn" onclick="printCal('year')">🖨 인쇄</button>
         <span class="hint" style="margin:0;">칸을 누르면 해당 월의 월간 캘린더로 이동해요</span>
       </div>
+      <div class="printTitle" id="prTitleYear"></div>
       <div class="yScroll" id="yScroll"><table class="year" id="yearGrid"></table></div>
+      <div id="yearPrintWrap" class="onlyPrint"></div>
       <div class="hint">※ 상단 = 월+일자, 왼쪽 = 카테고리(색상별 한 줄), 빨간 세로선 = 오늘. 색칠된 칸 = 그날 해당 카테고리 업무가 있는 날.</div>
     </div>
 
@@ -513,7 +603,7 @@
       <div class="progBtns" id="tmProg"></div>
     </div>
 
-    <div class="setRow">
+    <div class="setRow" id="tmRepRow">
       <h5>반복</h5>
       <select id="tmRepType" onchange="tmRepChanged()">
         <option value="none">반복 없음</option>
@@ -524,9 +614,11 @@
         <option value="yearly">매년 이 날짜</option>
       </select>
       <div class="tmRepOpt" id="tmRepOpt"></div>
-      <label class="tmEnd" id="tmEndWrap">종료일 <input type="date" id="tmRepEnd" onchange="tmPreview()">
-        <button class="miniBtn" onclick="document.getElementById('tmRepEnd').value='';tmPreview()">지우기</button>
-      </label>
+      <div class="tmEnd" id="tmEndWrap">
+        <label class="chkLb"><input type="radio" name="tmEndMode" value="never" onchange="tmEndMode()"> 계속 반복 (종료 없음)</label>
+        <label class="chkLb"><input type="radio" name="tmEndMode" value="until" onchange="tmEndMode()"> 종료일</label>
+        <input type="date" id="tmRepEnd" onchange="tmPreview()">
+      </div>
       <div class="hint" id="tmRepPreview"></div>
     </div>
 
@@ -593,7 +685,10 @@ const firebaseConfig = {
 };
 
 /* ── 전역 ─────────────────────────────────── */
-const PALETTE = ['#FFD8B8','#FDF0A8','#F9C9D8','#C4E8CC','#C2DDF2','#DCD2F0','#F6C6C0','#DDEBC0','#BCE3DE','#E9E0CE'];
+const PALETTE = [
+  '#FFD8B8','#FDF0A8','#F9C9D8','#C4E8CC','#C2DDF2','#DCD2F0','#F6C6C0','#DDEBC0','#BCE3DE','#E9E0CE',
+  '#FFC79E','#F5E58C','#F2AFC6','#A9DCB8','#A5CBEC','#C6B8E6','#EFA9A2','#C8DDA0','#9DD2CB','#D8CBB0'
+];
 const THEMES = {
   black : {label:'검정',  bg:'#F4F4F4', head:'#3A3A3A', acc:'#1E1E1E', selBg:'#E3E3E3', selBd:'#9E9E9E'},
   yellow: {label:'노랑',  bg:'#FDF6E0', head:'#DFA92B', acc:'#9C750B', selBg:'#FAEBB8', selBd:'#DFA92B'},
@@ -645,6 +740,21 @@ function pad2(n){ return String(n).padStart(2,'0'); }
 function mkDate(y,m,d){ return `${y}-${pad2(m)}-${pad2(d)}`; }
 function dowOf(y,m,d){ return new Date(y, m-1, d).getDay(); }
 function hasRep(t){ return !!(t.rep && t.rep.type && t.rep.type!=='none'); }
+function isSpan(t){ return !!(t.spanEnd && t.spanEnd > t.date); }
+function spanDays(t){
+  const a = new Date(t.date+'T00:00:00'), b = new Date(t.spanEnd+'T00:00:00');
+  return Math.round((b-a)/86400000) + 1;
+}
+/* 기간 업무가 이 달에 걸치는 구간 (없으면 null) */
+function spanRangeInMonth(t, y, m){
+  if(!isSpan(t)) return null;
+  const mStart = mkDate(y,m,1), mEnd = mkDate(y,m,daysInMonth(y,m));
+  if(t.spanEnd < mStart || t.date > mEnd) return null;
+  return {
+    from: t.date  > mStart ? Number(t.date.slice(8,10)) : 1,
+    to:   t.spanEnd < mEnd ? Number(t.spanEnd.slice(8,10)) : daysInMonth(y,m)
+  };
+}
 
 function matchRep(rep, y, m, d, start){
   const dow = dowOf(y,m,d), dim = daysInMonth(y,m);
@@ -664,6 +774,13 @@ function matchRep(rep, y, m, d, start){
   return false;
 }
 function occDaysInMonth(t, y, m){
+  if(isSpan(t)){
+    const r = spanRangeInMonth(t, y, m);
+    if(!r) return [];
+    const out = [];
+    for(let d=r.from; d<=r.to; d++) out.push(d);
+    return out;
+  }
   if(!hasRep(t)) return t.date.startsWith(`${y}-${pad2(m)}-`) ? [Number(t.date.slice(8,10))] : [];
   const out = [], dim = daysInMonth(y,m), end = t.repEnd || '';
   for(let d=1; d<=dim; d++){
@@ -727,6 +844,9 @@ function normalize(data, name){
     if(!t.rep || !t.rep.type) t.rep = null;
     t.repEnd = t.repEnd || '';
     if(t.repProg && typeof t.repProg !== 'object') t.repProg = null;
+    t.time = t.time || '';
+    t.spanEnd = t.spanEnd || '';
+    if(t.spanEnd && t.spanEnd <= t.date) t.spanEnd = '';
   });
   d.settings = d.settings || {};
   d.settings.theme = d.settings.theme || 'black';
@@ -1015,7 +1135,7 @@ function addCategory(){
   const nameEl = document.getElementById('catName');
   const name = nameEl.value.trim();
   if(!name){ alert('카테고리 이름을 입력해주세요.'); return; }
-  if(state.categories.length >= 10){ alert('카테고리는 최대 10개까지 만들 수 있어요.'); return; }
+  if(state.categories.length >= 20){ alert('카테고리는 최대 20개까지 만들 수 있어요.'); return; }
   if(state.categories.some(c=>c.name===name)){ alert('같은 이름의 카테고리가 이미 있어요.'); return; }
   const cat = {id:uid(), name, color:PALETTE[selSwatch]};
   state.categories.push(cat);
@@ -1066,18 +1186,25 @@ function submitTask(){
   if(!title){ alert('업무 내용을 입력해주세요.'); return; }
   if(!date){ alert('날짜를 선택해주세요.'); return; }
   if(!catId){ alert('카테고리를 먼저 추가한 뒤 선택해주세요.'); return; }
+  const useTime = document.getElementById('fUseTime').checked;
+  const useSpan = document.getElementById('fUseSpan').checked;
+  const spanEnd = useSpan ? document.getElementById('fSpanEnd').value : '';
+  if(useSpan && !spanEnd){ alert('기간 종료일을 선택해주세요.'); return; }
+  if(useSpan && spanEnd <= date){ alert('종료일은 시작 날짜보다 뒤여야 해요.'); return; }
   const data = {
     kind: document.getElementById('fKind').value,
     date, catId, prio: selPrio, title,
     prog: Number(document.getElementById('fProg').value),
     note: document.getElementById('fNote').value.trim(),
+    time: useTime ? document.getElementById('fTime').value : '',
+    spanEnd,
   };
   if(editId){
     const t = state.tasks.find(x=>x.id===editId);
     if(t) Object.assign(t, data);
     cancelEdit();
   }else{
-    state.tasks.push(Object.assign({id:uid()}, data));
+    state.tasks.push(Object.assign({id:uid(), rep:null, repEnd:'', repProg:null}, data));
     document.getElementById('fTitle').value = '';
     document.getElementById('fNote').value = '';
   }
@@ -1096,16 +1223,30 @@ function editTask(id){
   document.getElementById('fTitle').value = t.title;
   document.getElementById('fProg').value = String(Number(t.prog)||0);
   document.getElementById('fNote').value = t.note||'';
+  document.getElementById('fUseTime').checked = !!t.time;
+  document.getElementById('fTime').value = t.time || '';
+  document.getElementById('fUseSpan').checked = isSpan(t);
+  document.getElementById('fSpanEnd').value = t.spanEnd || '';
+  toggleOpt();
   document.getElementById('fSubmit').textContent = '수정 저장';
   document.getElementById('fCancel').style.display = 'inline-block';
   document.getElementById('formTitle').textContent = '업무 수정 중';
   activateById('p-input');
   window.scrollTo({top:0, behavior:'smooth'});
 }
+function toggleOpt(){
+  document.getElementById('fTimeWrap').classList.toggle('on', document.getElementById('fUseTime').checked);
+  document.getElementById('fSpanWrap').classList.toggle('on', document.getElementById('fUseSpan').checked);
+}
 function cancelEdit(){
   editId = null;
   document.getElementById('fTitle').value = '';
   document.getElementById('fNote').value = '';
+  document.getElementById('fUseTime').checked = false;
+  document.getElementById('fUseSpan').checked = false;
+  document.getElementById('fTime').value = '';
+  document.getElementById('fSpanEnd').value = '';
+  toggleOpt();
   document.getElementById('fSubmit').textContent = '＋ 추가';
   document.getElementById('fCancel').style.display = 'none';
   document.getElementById('formTitle').textContent = '새 업무 입력';
@@ -1150,7 +1291,7 @@ function renderTaskTable(){
     const isSch = isSchedule(t);
     return `<tr class="${done?'done':''}">
       <td align="center">${esc(t.kind)}</td>
-      <td align="center" ${t.date===today?'style="color:var(--blue);font-weight:700;"':''}>${t.date} ${weekdayKo(t.date)}${rep?`<div class="repTag">🔁 ${esc(repLabel(t))}</div>`:''}</td>
+      <td align="center" ${t.date===today?'style="color:var(--blue);font-weight:700;"':''}>${t.date} ${weekdayKo(t.date)}${t.time?` <span class="tmv">${t.time}</span>`:''}${isSpan(t)?`<div class="spanTag">▬ ~ ${t.spanEnd} (${spanDays(t)}일)</div>`:''}${rep?`<div class="repTag">🔁 ${esc(repLabel(t))}${t.repEnd?` ~${t.repEnd}`:' · 계속'}</div>`:''}</td>
       <td align="center">${c?`<span class="chip" style="background:${c.color}">${esc(c.name)}</span>`:'<span class="chip" style="background:#E6E6E6">미분류</span>'}</td>
       <td><span class="pcell"><span class="dot ${t.prio}"></span>${PRIO[t.prio]}</span></td>
       <td class="taskName">${esc(t.title)}</td>
@@ -1165,6 +1306,21 @@ function renderTaskTable(){
   document.getElementById('qCnt').textContent = rows.length + '건 표시 중';
 }
 
+/* ── 인쇄 ─────────────────────────────────── */
+function printCal(which){
+  if(which==='month'){
+    document.getElementById('prTitleMonth').textContent = `${state.name} · ${ym.y}년 ${ym.m}월 업무진행표`;
+    document.body.classList.add('pr-month');
+  }else{
+    document.getElementById('prTitleYear').textContent = `${state.name} · ${yearView}년 업무진행표`;
+    document.body.classList.add('pr-year');
+  }
+  const clean = ()=>{ document.body.classList.remove('pr-month','pr-year'); window.removeEventListener('afterprint', clean); };
+  window.addEventListener('afterprint', clean);
+  setTimeout(()=>window.print(), 60);
+  setTimeout(clean, 3000);   // afterprint 미지원 브라우저 대비
+}
+
 /* ── 업무 상세 모달 ───────────────────────── */
 let tmId = null, tmDate = null, tmProgVal = 0;
 
@@ -1175,7 +1331,7 @@ function openTaskModal(id, ds){
 
   document.getElementById('tmTitle').textContent = t.title;
   document.getElementById('tmMeta').innerHTML =
-    `<span>${ds} ${weekdayKo(ds)}</span><span>·</span>
+    `<span>${isSpan(t) ? `${t.date} ~ ${t.spanEnd}` : `${ds} ${weekdayKo(ds)}`}${t.time?` 🕒 ${t.time}`:''}</span><span>·</span>
      <span class="chip" style="background:#E9E9E9">${esc(t.kind)}</span>
      ${c?`<span class="chip" style="background:${c.color}">${esc(c.name)}</span>`:''}
      <span class="pcell"><span class="dot ${t.prio}"></span>${PRIO[t.prio]}</span>`;
@@ -1191,11 +1347,21 @@ function openTaskModal(id, ds){
     renderTmProg();
   }
 
-  // 반복
-  const r = t.rep;
-  document.getElementById('tmRepType').value = r && r.type ? r.type : 'none';
-  tmRepChanged(t);
-  document.getElementById('tmRepEnd').value = t.repEnd || '';
+  // 반복 (기간 업무는 반복 설정 없음)
+  const repRow = document.getElementById('tmRepRow');
+  if(isSpan(t)){
+    repRow.style.display = 'none';
+  }else{
+    repRow.style.display = '';
+    const r = t.rep;
+    document.getElementById('tmRepType').value = r && r.type ? r.type : 'none';
+    tmRepChanged(t);
+    const until = !!t.repEnd;
+    document.querySelector('input[name="tmEndMode"][value="until"]').checked = until;
+    document.querySelector('input[name="tmEndMode"][value="never"]').checked = !until;
+    document.getElementById('tmRepEnd').value = t.repEnd || '';
+    document.getElementById('tmRepEnd').disabled = !until;
+  }
 
   // 비고
   document.getElementById('tmNote').value = t.note || '';
@@ -1240,6 +1406,15 @@ function tmRepChanged(task){
     box.innerHTML = '';
   }
   document.getElementById('tmEndWrap').classList.toggle('hide', type==='none');
+  if(type!=='none' && !document.querySelector('input[name="tmEndMode"]:checked'))
+    document.querySelector('input[name="tmEndMode"][value="never"]').checked = true;
+  tmPreview();
+}
+function tmEndMode(){
+  const until = document.querySelector('input[name="tmEndMode"][value="until"]').checked;
+  const el = document.getElementById('tmRepEnd');
+  el.disabled = !until;
+  if(!until) el.value = '';
   tmPreview();
 }
 function tmReadRep(){
@@ -1262,7 +1437,7 @@ function tmPreview(){
   const label = repLabel(fake);
   // 이번 달 미리보기
   const days = occDaysInMonth(fake, ym.y, ym.m);
-  const end = fake.repEnd ? ` · ${fake.repEnd}까지` : '';
+  const end = fake.repEnd ? ` · ${fake.repEnd}까지` : ' · 계속';
   box.textContent = `🔁 ${label}${end} — ${ym.m}월에는 ${days.length ? days.join(', ')+'일' : '표시 없음'}`;
 }
 function tmNoteLinks(){
@@ -1273,12 +1448,14 @@ function tmNoteLinks(){
 }
 function tmSave(){
   const t = state.tasks.find(x=>x.id===tmId); if(!t) return;
+  if(!isSpan(t)){
   const hadRep = hasRep(t);
   const rep = tmReadRep();
   t.rep = rep;
   t.repEnd = rep ? (document.getElementById('tmRepEnd').value || '') : '';
   if(rep && !hadRep){ t.repProg = {}; t.repProg[t.date] = Number(t.prog)||0; }  // 반복 시작 시 기존 진행률 이전
   if(!rep) t.repProg = null;
+  }
   t.note = document.getElementById('tmNote').value.trim();
   if(!isSchedule(t)) setProgAt(t, tmDate, tmProgVal);
   save(); closeTaskModal();
@@ -1314,6 +1491,7 @@ function passFilter(t, prog){
 function occurrencesOfMonth(y, m){
   const out = [];
   state.tasks.forEach(t=>{
+    if(isSpan(t)) return;                       // 기간 업무는 막대로 따로 그림
     occDaysInMonth(t, y, m).forEach(day=>{
       const ds = mkDate(y, m, day);
       const prog = progOf(t, ds);
@@ -1321,6 +1499,25 @@ function occurrencesOfMonth(y, m){
     });
   });
   return out;
+}
+/* 이 달에 표시할 기간 막대 (겹치면 줄(lane)을 나눠 배치) */
+function spansOfMonth(y, m){
+  const list = [];
+  state.tasks.forEach(t=>{
+    if(!isSpan(t)) return;
+    if(!passFilter(t, Number(t.prog)||0)) return;
+    const r = spanRangeInMonth(t, y, m);
+    if(r) list.push({t, from:r.from, to:r.to});
+  });
+  list.sort((a,b)=> a.from-b.from || (b.to-b.from)-(a.to-a.from));
+  const lanes = [];
+  list.forEach(sp=>{
+    let li = lanes.findIndex(lane => lane.every(x => x.to < sp.from || x.from > sp.to));
+    if(li < 0){ lanes.push([sp]); li = lanes.length-1; }
+    else lanes[li].push(sp);
+    sp.lane = li;
+  });
+  return {list, laneCount:lanes.length};
 }
 
 /* ── 월간 캘린더 ──────────────────────────── */
@@ -1337,7 +1534,10 @@ function renderMonth(){
   const occs = occurrencesOfMonth(ym.y, ym.m);
   const byDay = {};
   occs.forEach(o=>{ (byDay[o.day]=byDay[o.day]||[]).push(o); });
-  Object.values(byDay).forEach(list=>list.sort((a,b)=>PRIO_ORD[a.t.prio]-PRIO_ORD[b.t.prio]));
+  // 시간이 있으면 시간 순, 없으면 뒤로 → 그다음 우선순위 순
+  Object.values(byDay).forEach(list=>list.sort((a,b)=>
+    (a.t.time||'99:99').localeCompare(b.t.time||'99:99') || PRIO_ORD[a.t.prio]-PRIO_ORD[b.t.prio]));
+  const spans = spansOfMonth(ym.y, ym.m);
 
   const dim = daysInMonth(ym.y, ym.m);
   const first = new Date(ym.y, ym.m-1, 1).getDay();
@@ -1357,21 +1557,34 @@ function renderMonth(){
     }else{
       const dateStr = `${ym.y}-${mm}-${String(dayN).padStart(2,'0')}`;
       const cls = [isSun?'sunC':'', dateStr===td?'today':''].join(' ');
+      // 기간 막대 (줄 맞춤용 빈칸 포함)
+      let bars = '';
+      for(let ln=0; ln<spans.laneCount; ln++){
+        const sp = spans.list.find(x=>x.lane===ln && dayN>=x.from && dayN<=x.to);
+        if(!sp){ bars += '<div class="spanGap"></div>'; continue; }
+        const c = catById(sp.t.catId);
+        const color = c ? c.color : '#DDD';
+        const isStart = dayN===sp.from, isEnd = dayN===sp.to;
+        const label = (isStart || isSun) ? `<span class="sl">${esc(sp.t.title)}</span>` : '';
+        bars += `<div class="spanBar ${isStart?'st':''} ${isEnd?'en':''}" style="background:${color}"
+          onclick="openTaskModal('${sp.t.id}','${dateStr}')"
+          title="${esc(sp.t.title)} (${sp.t.date} ~ ${sp.t.spanEnd})">${label}</div>`;
+      }
       let items = (byDay[dayN]||[]).map(o=>{
         const t = o.t, sch = isSchedule(t), done = !sch && o.prog>=100;
-        const tip = esc(t.title) + (hasRep(t)?` (${repLabel(t)})`:'') + (t.note?' — '+esc(t.note.replace(/\n/g,' ')):'');
+        const tip = esc(t.title) + (t.time?` ${t.time}`:'') + (hasRep(t)?` (${repLabel(t)})`:'') + (t.note?' — '+esc(t.note.replace(/\n/g,' ')):'');
         return `<div class="task ${done?'done':''}" onclick="openTaskModal('${t.id}','${o.ds}')" title="${tip}">
-          ${sch?'<span class="clock">🕐</span>':''}<span class="dot ${t.prio}"></span>
+          ${t.time?`<span class="tmv">${t.time}</span>`:sch?'<span class="clock">🕐</span>':''}<span class="dot ${t.prio}"></span>
           <span class="t">${hasRep(t)?'<span class="repMark">🔁</span>':''}${esc(t.title)}</span>
           ${sch?'':done?'<span class="check">✔</span>':`<span class="pie" style="--p:${o.prog}"></span>`}
         </div>`;
       }).join('');
-      h += `<td class="${cls}"><div class="dnum">${dayN}</div>${items}</td>`;
+      h += `<td class="${cls}"><div class="dnum">${dayN}</div>${bars}${items}</td>`;
     }
     if(i%7===6) h += '</tr>';
   }
   document.getElementById('calTable').innerHTML = h;
-  renderAnalysis(occs);
+  renderAnalysis(occs.concat(spans.list.map(sp=>({t:sp.t, ds:sp.t.date, prog:Number(sp.t.prog)||0}))));
 }
 
 /* ── 분석 ────────────────────────────────── */
@@ -1461,15 +1674,7 @@ function renderAnalysis(occs){
 
 /* ── 연간 캘린더 ──────────────────────────── */
 function moveYearView(d){ yearView += d; renderYear(); }
-function renderYear(){
-  document.getElementById('yvLabel').textContent = `${yearView}년 한눈에 보기`;
-  const grid = document.getElementById('yearGrid');
-  if(!state.categories.length){
-    grid.innerHTML = `<tr><td style="padding:24px; border:none;"><div class="emptyMsg">카테고리를 추가하면 연간 현황이 여기에 표시돼요.</div></td></tr>`;
-    return;
-  }
-  const dims = Array.from({length:12},(_,i)=>daysInMonth(yearView, i+1));
-  // 카테고리별 날짜 집합
+function computeCatDates(){
   const catDates = {};
   state.categories.forEach(c=>catDates[c.id]=new Set());
   state.tasks.forEach(t=>{
@@ -1477,6 +1682,18 @@ function renderYear(){
     for(let m=1; m<=12; m++)
       occDaysInMonth(t, yearView, m).forEach(d=>catDates[t.catId].add(m+'-'+d));
   });
+  return catDates;
+}
+function renderYear(){
+  document.getElementById('yvLabel').textContent = `${yearView}년 한눈에 보기`;
+  const grid = document.getElementById('yearGrid');
+  if(!state.categories.length){
+    grid.innerHTML = `<tr><td style="padding:24px; border:none;"><div class="emptyMsg">카테고리를 추가하면 연간 현황이 여기에 표시돼요.</div></td></tr>`;
+    document.getElementById('yearPrintWrap').innerHTML = '';
+    return;
+  }
+  const dims = Array.from({length:12},(_,i)=>daysInMonth(yearView, i+1));
+  const catDates = computeCatDates();
   const isThisYear = yearView === now.getFullYear();
   const tm = now.getMonth()+1, tdd = now.getDate();
 
@@ -1500,6 +1717,36 @@ function renderYear(){
     h += '</tr>';
   });
   grid.innerHTML = h;
+  buildYearPrintTables(dims, catDates, isThisYear, tm, tdd);
+}
+/* 인쇄용 — 3개월씩 4페이지로 나눈 테이블을 미리 만들어둔다 */
+function buildYearPrintTables(dims, catDates, isThisYear, tm, tdd){
+  const wrap = document.getElementById('yearPrintWrap');
+  const quarters = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
+  wrap.innerHTML = quarters.map((months, qi)=>{
+    let h = `<div class="yPage"><div class="yPageTitle">${state.name} · ${yearView}년 업무진행표 <span>${months[0]}~${months[2]}월</span></div>`;
+    h += '<table class="year yPrintTable"><tr><th class="catCol" rowspan="2">카테고리</th>';
+    months.forEach((m,i)=> h += `<th class="mHead ${i%2===1?'alt':''}" colspan="${dims[m-1]}">${m}월</th>`);
+    h += '</tr><tr>';
+    months.forEach((m,i)=>{
+      for(let d=1; d<=dims[m-1]; d++)
+        h += `<th class="dHead ${i%2===1?'alt':''} ${(isThisYear&&m===tm&&d===tdd)?'todayCol':''}">${d}</th>`;
+    });
+    h += '</tr>';
+    state.categories.forEach(c=>{
+      h += `<tr><td class="catName"><span class="dot" style="background:${c.color}"></span>${esc(c.name)}</td>`;
+      months.forEach((m,i)=>{
+        for(let d=1; d<=dims[m-1]; d++){
+          const fill = catDates[c.id].has(m+'-'+d) ? ` style="background:${c.color}"` : '';
+          const cls = `dcell ${i%2===1?'alt':''} ${(isThisYear&&m===tm&&d===tdd)?'todayCol':''}`;
+          h += `<td class="${cls}"${fill}></td>`;
+        }
+      });
+      h += '</tr>';
+    });
+    h += '</table></div>';
+    return h;
+  }).join('');
 }
 function scrollToToday(){
   const box = document.getElementById('yScroll');
