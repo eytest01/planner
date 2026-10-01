@@ -162,12 +162,15 @@
   .dnum{font-size:15px; font-weight:900; text-align:center; margin-bottom:3px;}
   td.sunC .dnum{color:var(--hi);}
   td.today .dnum{color:var(--acc);}
-  .task{display:flex; align-items:center; gap:5px; font-size:11.5px; line-height:1.4; margin-bottom:3px;
+  .task{display:flex; align-items:center; gap:5px; font-size:15px; line-height:1.4; margin-bottom:2px;
         cursor:pointer; border-radius:3px; padding:0 2px;}
   .task:hover{background:#F1F1F1;}
-  .task .t{flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;}
+  .task .t{flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; border-radius:3px; padding:0 3px; margin:0 -3px;}
   .task.done .t{text-decoration:line-through; color:#BBB;}
   .task .clock{font-size:11px; flex:none;}
+  .taskMemo{font-size:11.5px; line-height:1.3; color:var(--sub); margin:-1px 0 4px 15px;
+            overflow:hidden; white-space:nowrap; text-overflow:ellipsis; cursor:pointer;}
+  .task.done + .taskMemo{color:#CCC;}
 
   .side{width:240px; flex:none; display:flex; flex-direction:column; gap:14px;}
   .panel{border:1px solid var(--line); border-radius:6px; padding:13px 15px; background:#FDFDFD;}
@@ -496,6 +499,9 @@
           <label class="f" style="flex:1; min-width:260px;">비고
             <input type="text" id="fNote" placeholder="메모 · https://로 시작하는 링크를 넣으면 눌러서 열려요">
           </label>
+          <label class="f" style="flex:1; min-width:140px;">메모
+            <input type="text" id="fMemo" maxlength="16" placeholder="캘린더에 짧게 표시 (16자 이내)">
+          </label>
           <button class="addBtn" id="fSubmit" onclick="submitTask()">＋ 추가</button>
           <button class="ghostBtn" id="fCancel" onclick="cancelEdit()">취소</button>
         </div>
@@ -643,6 +649,11 @@
         <input type="date" id="tmRepEnd" onchange="tmPreview()">
       </div>
       <div class="hint" id="tmRepPreview"></div>
+    </div>
+
+    <div class="setRow">
+      <h5>메모 <span class="tmSub">캘린더 안 업무 바로 밑에 표시돼요 (16자 이내)</span></h5>
+      <input type="text" id="tmMemo" maxlength="16" placeholder="캘린더에 짧게 표시 (16자 이내)">
     </div>
 
     <div class="setRow">
@@ -1219,6 +1230,7 @@ function submitTask(){
     date, catId, prio: selPrio, title,
     prog: Number(document.getElementById('fProg').value),
     note: document.getElementById('fNote').value.trim(),
+    memo: document.getElementById('fMemo').value.trim().slice(0,16),
     time: useTime ? document.getElementById('fTime').value : '',
     spanEnd,
   };
@@ -1230,6 +1242,7 @@ function submitTask(){
     state.tasks.push(Object.assign({id:uid(), rep:null, repEnd:'', repProg:null}, data));
     document.getElementById('fTitle').value = '';
     document.getElementById('fNote').value = '';
+    document.getElementById('fMemo').value = '';
   }
   save(); renderTaskTable(); renderMonth(); renderYear();
 }
@@ -1246,6 +1259,7 @@ function editTask(id){
   document.getElementById('fTitle').value = t.title;
   document.getElementById('fProg').value = String(Number(t.prog)||0);
   document.getElementById('fNote').value = t.note||'';
+  document.getElementById('fMemo').value = t.memo||'';
   document.getElementById('fUseTime').checked = !!t.time;
   document.getElementById('fTime').value = t.time || '';
   document.getElementById('fUseSpan').checked = isSpan(t);
@@ -1386,7 +1400,8 @@ function openTaskModal(id, ds){
     document.getElementById('tmRepEnd').disabled = !until;
   }
 
-  // 비고
+  // 메모 / 비고
+  document.getElementById('tmMemo').value = t.memo || '';
   document.getElementById('tmNote').value = t.note || '';
   tmNoteLinks();
   document.getElementById('taskModal').classList.add('on');
@@ -1479,6 +1494,7 @@ function tmSave(){
   if(rep && !hadRep){ t.repProg = {}; t.repProg[t.date] = Number(t.prog)||0; }  // 반복 시작 시 기존 진행률 이전
   if(!rep) t.repProg = null;
   }
+  t.memo = document.getElementById('tmMemo').value.trim().slice(0,16);
   t.note = document.getElementById('tmNote').value.trim();
   if(!isSchedule(t)) setProgAt(t, tmDate, tmProgVal);
   save(); closeTaskModal();
@@ -1596,11 +1612,13 @@ function renderMonth(){
       let items = (byDay[dayN]||[]).map(o=>{
         const t = o.t, sch = isSchedule(t), done = !sch && o.prog>=100;
         const tip = esc(t.title) + (t.time?` ${t.time}`:'') + (hasRep(t)?` (${repLabel(t)})`:'') + (t.note?' — '+esc(t.note.replace(/\n/g,' ')):'');
+        const tCat = catById(t.catId);
+        const hl = tCat ? ` style="background:${tCat.color}"` : '';
         return `<div class="task ${done?'done':''}" onclick="openTaskModal('${t.id}','${o.ds}')" title="${tip}">
           ${t.time?`<span class="tmv">${t.time}</span>`:sch?'<span class="clock">🕐</span>':''}<span class="dot ${t.prio}"></span>
-          <span class="t">${hasRep(t)?'<span class="repMark">🔁</span>':''}${esc(t.title)}</span>
+          <span class="t"${hl}>${hasRep(t)?'<span class="repMark">🔁</span>':''}${esc(t.title)}</span>
           ${sch?'':done?'<span class="check">✔</span>':`<span class="pie" style="--p:${o.prog}"></span>`}
-        </div>`;
+        </div>${t.memo?`<div class="taskMemo" onclick="openTaskModal('${t.id}','${o.ds}')">${esc(t.memo)}</div>`:''}`;
       }).join('');
       h += `<td class="${cls}"><div class="dnum">${dayN}</div>${bars}${items}</td>`;
     }
